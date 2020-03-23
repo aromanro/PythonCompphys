@@ -5,3 +5,5 @@ Some tutorials on various topics, using python instead of C++, with more comment
 For example they might contain programs/problems from the Jos Thijjsen's Computational Physics book or something similar.
  
 Some of them will be described on https://compphys.go.ro, some of them only here (with comments in notebooks, too)
+
+Binder link: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aromanro/PythonCompphys/master)
