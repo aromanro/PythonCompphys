@@ -375,7 +375,7 @@ def NuclearDeriv(alpha, beta, Ra, Rb, X, Z = 1.):
 # In[23]:
 
 
-# 9.47 - there is some renaming to have the same names as in TwoElectronTwoCenterDeriv
+# 9.47 - there is some renaming to have the same names as in TwoElectronTwoCenter
 def TwoElectronTwoCenterDeriv(alpha, beta, gamma, delta, Ra, Rb, Rc, Rd, X):   
     RP = Rp(alpha, gamma, Ra, Rc) # 9.38
     RQ = Rp(beta, delta, Rb, Rd) # 9.45        
@@ -438,7 +438,7 @@ M = 1836.5 * mass
 
 numPoints = 43
 
-Nucleardt = numPoints * dt # 4.2 (atomic units)
+Nucleardt = numPoints * dt # 4.3 (atomic units)
 Nucleardt2 = Nucleardt * Nucleardt
 
 numNuclearPoints = 300
