@@ -247,7 +247,7 @@ for cycle in range(numPoints):
         
     # Verlet
                     
-    # compute Ct - 9.31, but with friction force added - the formula is wrong, notice the 4 factor that is obtained because there are multiple Cs that have to be derived (2 for the first term, 4 for the second)
+    # compute Ct - 9.31, but with friction force added
     
     Ct = (2. * mass * C - massMinusGamma * Cprev - 4. * F.dot(C) * dt2) / massPlusGamma
                 
@@ -559,7 +559,7 @@ for nuclearCycle in range(numNuclearPoints):
                 
         # Verlet for electrons
                     
-        # compute Ct - 9.31, but with friction force added - the formula is wrong, notice the 4 factor that is obtained because there are multiple Cs that have to be derived (2 for the first term, 4 for the second)
+        # compute Ct - 9.31, but with friction force added
             
         Ct = (2. * mass * C - massMinusGamma * Cprev - 4. * F.dot(C) * dt2) / massPlusGamma
                 
