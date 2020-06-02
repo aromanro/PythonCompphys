@@ -13,6 +13,7 @@ The [Hartree-Fock notebook](hartree-fock.ipynb) is for paragraphs and problems f
 ### Car-Parrinello
 
 The [Car-Parrinello notebook](Car-Parrinello.ipynb) is for the Chapter 9 in [Computational Physics, by Jos Thijssen](https://www.cambridge.org/core/books/computational-physics/BEE73B0139D4A9993193B57CDC62096E#fndtn-information). See the notebook for details.
+I also added some info on the blog: https://compphys.go.ro/car-parrinello-quantum-molecular-dynamics/
 
 ### Python scripts
 

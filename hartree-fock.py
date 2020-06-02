@@ -118,7 +118,7 @@ print(eigvals[0])
 
 # The exact result is -0.5 (here we use atomic units, the energy is in Hartrees).
 # 
-# The result here is qite good (you can often do that if you know the exact result in advance). DFTAtom gets -0.445 (that's the expected result for LDA, check out [NIST](https://www.nist.gov/pml/atomic-reference-data-electronic-structure-calculations/atomic-reference-data-electronic-7-0)) and HartreeFock (unrestricted) with STO6G gets -0.471. With the Variational Quantum Monte Carlo project with STO6G I also got -0.471. As the problem is analytically solvable and one knows the result, it's no surprise that the result is so good. One just has to ensure that the space spanned by the basis vectors includes as much as possible of the real solution.
+# The result here is quite good (you can often do that if you know the exact result in advance). DFTAtom gets -0.445 (that's the expected result for LDA, check out [NIST](https://www.nist.gov/pml/atomic-reference-data-electronic-structure-calculations/atomic-reference-data-electronic-7-0)) and HartreeFock (unrestricted) with STO6G gets -0.471. With the Variational Quantum Monte Carlo project with STO6G I also got -0.471. As the problem is analytically solvable and one knows the result, it's no surprise that the result is so good. One just has to ensure that the space spanned by the basis vectors includes as much as possible of the real solution.
 # 
 # Now let's look at the computed wavefunction together with the exact solution:
 

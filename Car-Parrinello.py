@@ -13,6 +13,7 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 # ### References
 # 
 # The referenced chapters, formulae and problems are from the book [Computational Physics, by Jos Thijssen](https://www.cambridge.org/core/books/computational-physics/BEE73B0139D4A9993193B57CDC62096E#fndtn-information).
+# I also added some info on the blog: https://compphys.go.ro/car-parrinello-quantum-molecular-dynamics/
 # 
 # What follows is copied directly from hatree-fock.ipynb, check that one for details. The interesting new part is after this portion. If you already looked over the Hartree-Fock, you can skip it.
 
@@ -639,6 +640,8 @@ for nuclearCycle in range(numNuclearPoints):
 
 
 x = np.linspace(0, numNuclearPoints, numNuclearPoints)
+
+plt.rcParams["figure.figsize"] = (20,5)
 plt.plot(x, distances)
 
 
