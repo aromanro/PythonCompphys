@@ -643,6 +643,7 @@ x = np.linspace(0, numNuclearPoints, numNuclearPoints)
 
 plt.rcParams["figure.figsize"] = (20,5)
 plt.plot(x, distances)
+plt.show()
 
 
 # In[28]:
