@@ -231,12 +231,15 @@ oldE = 100
 for cycle in range(numPoints):
 
     # Fock matrix computation
-    for i in range(2*basisSize):
-        for j in range(2*basisSize):
-            F[i, j] = H[i, j]
-            for k in range(2*basisSize):
-                for l in range(2*basisSize):
-                    F[i, j] += Qt[i, k, j, l] * C[k] * C[l]
+    
+    #for i in range(2*basisSize):
+    #    for j in range(2*basisSize):
+    #        F[i, j] = H[i, j]
+    #        for k in range(2*basisSize):
+    #            for l in range(2*basisSize):
+    #                F[i, j] += Qt[i, k, j, l] * C[k] * C[l]
+    
+    F = H + np.einsum('ikjl,k,l', Qt, C, C)
         
     # compute energy
     Eg = C.dot(H + F).dot(C) + 1. / X
@@ -552,12 +555,14 @@ for nuclearCycle in range(numNuclearPoints):
     for cycle in range(numPoints):
 
         # Fock matrix computation
-        for i in range(2*basisSize):
-            for j in range(2*basisSize):
-                F[i, j] = H[i, j]
-                for k in range(2*basisSize):
-                    for l in range(2*basisSize):
-                        F[i, j] += Qt[i, k, j, l] * C[k] * C[l]
+        #for i in range(2*basisSize):
+        #    for j in range(2*basisSize):
+        #        F[i, j] = H[i, j]
+        #        for k in range(2*basisSize):
+        #            for l in range(2*basisSize):
+        #                F[i, j] += Qt[i, k, j, l] * C[k] * C[l]
+        
+        F = H + np.einsum('ikjl,k,l', Qt, C, C)
                 
         # Verlet for electrons
                     
@@ -605,14 +610,16 @@ for nuclearCycle in range(numNuclearPoints):
     #print(Eg)
                         
     # verlet for nuclear
-                     
-    for i in range(2*basisSize):
-        for j in range(2*basisSize):
-            FDeriv[i, j] = HDeriv[i, j]
-            for k in range(2*basisSize):
-                for l in range(2*basisSize):
-                    FDeriv[i, j] += QtDeriv[i, k, j, l] * C[k] * C[l]
-    
+                         
+    #for i in range(2*basisSize):
+    #    for j in range(2*basisSize):
+    #        FDeriv[i, j] = HDeriv[i, j]
+    #        for k in range(2*basisSize):
+    #            for l in range(2*basisSize):
+    #                FDeriv[i, j] += QtDeriv[i, k, j, l] * C[k] * C[l]
+        
+    FDeriv = HDeriv + np.einsum('ikjl,k,l', QtDeriv, C, C)
+        
     lam *= massPlusGamma * 0.5 # correction - there is a 2 factor in the lambda, also needs to be adjusted because of the massPlusGamma division
                 
     # C.dot(ODeriv).dot(C) can be reduced to a quarter, knowing that diagonal sectors are zero
@@ -650,10 +657,4 @@ plt.show()
 
 
 print(X) # the experimental value given in the book is 1.401, the equilibrium with Hartree-Fock using only s-type orbitals is 1.3881
-
-
-# In[ ]:
-
-
-
 

@@ -203,26 +203,30 @@ oldE = 100
 for cycle in range(100):
     
     # 4.18
-    for i in range(basisSize):
-        for j in range(basisSize):
-            F[i, j] = H[i, j]
-            for k in range(basisSize):
-                for l in range(basisSize):
-                    F[i, j] += Q[i, k, j, l] * C[k] * C[l]
-
+    #for i in range(basisSize):
+    #    for j in range(basisSize):
+    #        F[i, j] = H[i, j]
+    #        for k in range(basisSize):
+    #            for l in range(basisSize):
+    #                F[i, j] += Q[i, k, j, l] * C[k] * C[l]
+                    
+    F = H + np.einsum('ikjl,k,l', Q, C, C)                    
+                    
     # 4.20
     eigvals, eigvecs = eigh(F, O, eigvals_only=False)
 
     C = eigvecs[:,0]
 
     # 4.21
-    Eg = 0
-    for i in range(basisSize):
-        for j in range(basisSize):
-            Eg += 2 * C[i] * C[j] * H[i, j]
-            for k in range(basisSize):
-                for l in range(basisSize):
-                    Eg += Q[i, k, j, l] * C[i] * C[j] * C[k] * C[l]
+    #Eg = 0
+    #for i in range(basisSize):
+    #    for j in range(basisSize):
+    #        Eg += 2 * C[i] * C[j] * H[i, j]
+    #        for k in range(basisSize):
+    #            for l in range(basisSize):
+    #                Eg += Q[i, k, j, l] * C[i] * C[j] * C[k] * C[l]
+                    
+    Eg = 2 * np.einsum('ij,i,j', H, C, C) + np.einsum('ikjl,i,j,k,l', Q, C, C, C, C)
     
     if abs(oldE-Eg) < 1E-10:
         break
@@ -425,24 +429,26 @@ oldE = 100
 
 for cycle in range(100):
 
-    for i in range(2*basisSize):
-        for j in range(2*basisSize):
-            F[i, j] = H[i, j]
-            for k in range(2*basisSize):
-                for l in range(2*basisSize):
-                    F[i, j] += Q[i, k, j, l] * C[k] * C[l]
+    #for i in range(2*basisSize):
+    #    for j in range(2*basisSize):
+    #        F[i, j] = H[i, j]
+    #        for k in range(2*basisSize):
+    #            for l in range(2*basisSize):
+    #                F[i, j] += Q[i, k, j, l] * C[k] * C[l]
+    
+    F = H + np.einsum('ikjl,k,l', Q, C, C) 
 
     eigvals, eigvecs = eigh(F, O, eigvals_only=False)
 
     C = eigvecs[:,0]
 
-#    Eg = 0
-#    for i in range(2*basisSize):
-#        for j in range(2*basisSize):
-#            Eg += 2 * C[i] * C[j] * H[i, j]
-#            for k in range(2*basisSize):
-#                for l in range(2*basisSize):
-#                    Eg += Q[i, k, j, l] * C[i] * C[j] * C[k] * C[l]
+    #Eg = 0
+    #for i in range(2*basisSize):
+    #    for j in range(2*basisSize):
+    #        Eg += 2 * C[i] * C[j] * H[i, j]
+    #        for k in range(2*basisSize):
+    #            for l in range(2*basisSize):
+    #                Eg += Q[i, k, j, l] * C[i] * C[j] * C[k] * C[l]
 
     Eg = C.dot(H + F).dot(C)
      
@@ -494,12 +500,14 @@ oldE = 100
 
 for cycle in range(100):
 
-    for i in range(2*basisSize):
-        for j in range(2*basisSize):
-            F[i, j] = H[i, j]
-            for k in range(2*basisSize):
-                for l in range(2*basisSize):
-                    F[i, j] += Qt[i, k, j, l] * C[k] * C[l]
+    #for i in range(2*basisSize):
+    #    for j in range(2*basisSize):
+    #        F[i, j] = H[i, j]
+    #        for k in range(2*basisSize):
+    #            for l in range(2*basisSize):
+    #                F[i, j] += Qt[i, k, j, l] * C[k] * C[l]
+    
+    F = H + np.einsum('ikjl,k,l', Q, C, C) 
 
     eigvals, eigvecs = eigh(F, O, eigvals_only=False)
 
