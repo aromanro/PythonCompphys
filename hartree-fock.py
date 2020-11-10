@@ -184,11 +184,7 @@ for i in range(basisSize):
 # In[18]:
 
 
-v = 0
-for i in range(basisSize):
-    for j in range(basisSize):
-        v += O[i, j]
-v = 1. / m.sqrt(v)
+v = 1. / m.sqrt(O.sum())
 
 C = np.array([v, v, v, v]) # a choice for C to start with. Check the commented one instead
 #C = np.array([1, 1, 1, 1])
@@ -412,11 +408,7 @@ for i in range(basisSize):
 # In[33]:
 
 
-v = 0
-for i in range(2 * basisSize):
-    for j in range(2 * basisSize):
-        v += O[i, j]
-v = 1. / m.sqrt(v)
+v = 1. / m.sqrt(O.sum())
 
 C = np.array([v, v, v, v, v, v, v, v])
 
