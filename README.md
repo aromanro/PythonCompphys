@@ -15,6 +15,12 @@ The [Hartree-Fock notebook](hartree-fock.ipynb) is for paragraphs and problems f
 The [Car-Parrinello notebook](Car-Parrinello.ipynb) is for the Chapter 9 in [Computational Physics, by Jos Thijssen](https://www.cambridge.org/core/books/computational-physics/BEE73B0139D4A9993193B57CDC62096E#fndtn-information). See the notebook for details.
 I also added some info on the blog: https://compphys.go.ro/car-parrinello-quantum-molecular-dynamics/
 
+### Density Functional Theory
+
+The [DFT notebook](dft.ipynb)
+It's work in progress, hopefully it will cover the assignments of Thomas Arias lectures.
+For now, you'll find in there only the first assignment solved, on the Poisson equation.
+
 ### Python scripts
 
 I added py files exported (with slight changes) from the notebooks. They are here for convenience, they might not even be in sync with the notebooks.
