@@ -496,7 +496,7 @@ Sf = np.sum(np.exp(-1j * G @ X.transpose()), axis = 1)
 Z = 1
 sigma1 = 0.25
 
-g1 = Z * Gaussian(dr.transpose(), sigma1)
+g1 = Z * Gaussian(dr, sigma1)
 g1 = np.reshape(g1, (g1.size, 1))
 n = cI(cJ(g1) * Sf)
 n = np.real(n)
