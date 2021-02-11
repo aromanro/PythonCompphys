@@ -25,8 +25,12 @@
 
 import math as m
 import numpy as np
+import scipy as sp
+import scipy.linalg as splalg
 import matplotlib.pyplot as plt
 get_ipython().run_line_magic('matplotlib', 'inline')
+#import os
+#os.environ['CUDA_VISIBLE_DEVICES'] = '-1' #disable gpu usage for now, I have a bug
 
 
 # In[2]:
@@ -61,6 +65,7 @@ R=np.diag([6, 6, 6])
 r = M @ np.linalg.inv(np.diag(S)) @ np.transpose(R)
 G = 2 * m.pi * N @ np.linalg.inv(R)
 G2 = np.sum(G * G, axis=1)
+G2 = np.reshape(G2, (G2.size, 1))
 
 
 # In[6]:
@@ -72,7 +77,7 @@ cellCenter = np.sum(R, axis = 1) / 2
 # In[7]:
 
 
-vecsFromCenter = r - np.ones((np.prod(S), 3)) * cellCenter
+vecsFromCenter = r - np.ones((np.prod(S), 1)) * cellCenter
 dr = np.sqrt(np.sum(vecsFromCenter * vecsFromCenter, 1))
 
 
@@ -92,6 +97,7 @@ sigma2 = 0.5
 g1 = Gaussian(dr, sigma1)
 g2 = Gaussian(dr, sigma2)
 n = g2 - g1
+n = np.reshape(n, (n.size, 1))
 
 
 # In[10]:
@@ -117,9 +123,9 @@ print ("Total charge check: ", np.sum(n) * np.linalg.det(R) / np.prod(S))
 
 def fft3(dat, N, s):
     if s == 1:
-        result = np.reshape(np.fft.ifftn(np.reshape(dat, (N[0], N[1], N[2]))) * np.prod(N), np.size(dat))        
+        result = np.reshape(np.fft.ifftn(np.reshape(dat, (N[0], N[1], N[2]), order='F')) * np.prod(N), dat.shape, order='F')        
     else:
-        result = np.reshape(np.fft.fftn(np.reshape(dat, (N[0], N[1], N[2]))), np.size(dat))
+        result = np.reshape(np.fft.fftn(np.reshape(dat, (N[0], N[1], N[2]), order='F')), dat.shape, order='F')
     
     return result
 
@@ -157,7 +163,7 @@ def L(input):
 
 def Linv(input):
     old_settings = np.seterr(divide='ignore', invalid='ignore')
-    result = -1. / np.linalg.det(R) * input / G2
+    result = -1. / np.linalg.det(R) * input / np.reshape(G2, input.shape)
     result[0] = 0
     np.seterr(**old_settings)
     return result    
@@ -179,26 +185,20 @@ phi = Poisson(n)
 # In[21]:
 
 
-phi = np.real(phi)
+Unum = 0.5 * np.real(cJ(phi).transpose().conjugate() @ O(cJ(n)))
+Uanal=((1./sigma1+1./sigma2)/2.- np.sqrt(2.) / np.sqrt(sigma1*sigma1 + sigma2*sigma2))/np.sqrt(m.pi)
+print('Numeric, analytic Coulomb energy:', Unum[0,0], Uanal)
 
 
 # In[22]:
-
-
-Unum = 0.5 * np.real(cJ(phi).transpose().conjugate() @ O(cJ(n)))
-Uanal=((1./sigma1+1./sigma2)/2.- np.sqrt(2.) / np.sqrt(sigma1*sigma1 + sigma2*sigma2))/np.sqrt(m.pi)
-print('Numeric, analytic Coulomb energy:', Unum, Uanal)
-
-
-# In[23]:
 
 
 def Plot(dat):
 
     fig=plt.figure(figsize=(25, 15))
 
-    x = np.arange(0, S[1])
-    y = np.arange(0, S[2])
+    x = np.arange(0, S[0])
+    y = np.arange(0, S[1])
     xs, ys = np.meshgrid(x, y)
 
     toplot1 = np.reshape(dat, S)[:,:,int(S[2]/2)]
@@ -206,7 +206,7 @@ def Plot(dat):
     ax1 = fig.add_subplot(1, 3, 1, projection='3d')
     ax1.plot_surface(xs, ys, toplot1, cmap='viridis', edgecolor='none')
 
-    x = np.arange(0, S[0])
+    y = np.arange(0, S[2])
     xs, ys = np.meshgrid(x, y)
 
     toplot2 = np.reshape(dat, S)[:,int(S[1]/2),:]
@@ -214,7 +214,7 @@ def Plot(dat):
     ax2 = fig.add_subplot(1, 3, 2, projection='3d')
     ax2.plot_surface(xs, ys, toplot2, cmap='viridis', edgecolor='none')
 
-    y = np.arange(0, S[1])
+    x = np.arange(0, S[1])
     xs, ys = np.meshgrid(x, y)
     toplot3 = np.reshape(dat, S)[int(S[0]/2),:,:]
     
@@ -225,19 +225,19 @@ def Plot(dat):
     plt.show()
 
 
-# In[24]:
+# In[23]:
 
 
 Plot(n)
 
 
+# In[24]:
+
+
+Plot(np.real(phi))
+
+
 # In[25]:
-
-
-Plot(phi)
-
-
-# In[26]:
 
 
 X = np.asarray([[0, 0, 0], [1.75, 0, 0]])
@@ -245,52 +245,300 @@ Sf = np.sum(np.exp(-1j * G @ X.transpose()), axis = 1)
 Z = 1
 
 
-# In[27]:
+# In[26]:
 
 
 sigma1 = 0.25
 g1 = Z * Gaussian(dr, sigma1)
 
 
-# In[28]:
+# In[27]:
 
 
 n = cI(cJ(g1)* Sf)
 n = np.real(n)
 
 
-# In[29]:
+# In[28]:
 
 
 Plot(n)
 
 
-# In[30]:
+# In[29]:
 
 
 Uself = Z*Z/(2.*m.sqrt(m.pi))*(1./sigma1)*np.size(X,0)
 
 
-# In[31]:
+# In[30]:
 
 
 phi = Poisson(n)
-phi = np.real(phi)
+
+
+# In[31]:
+
+
+Plot(np.real(phi))
 
 
 # In[32]:
-
-
-Plot(phi)
-
-
-# In[33]:
 
 
 Unum = 0.5 * np.real(cJ(phi).transpose().conjugate() @ O(cJ(n)))
 print('Ewald energy:', Unum - Uself)
 print('Unum:', Unum)
 print('Uself:', Uself)
+
+
+# ### Assignment 2: Implement variational solution to Schrodinger's equation and Kohn-Sham equations using steepest descents
+
+# First, let's repeat initialization similarly as above but with different params:
+
+# In[33]:
+
+
+S = np.array([20, 25, 30])
+ms = np.arange(np.prod(S))
+m1 = np.remainder(ms, S[0])
+m2 = np.remainder(np.floor_divide(ms, S[0]), S[1])
+m3 = np.remainder(np.floor_divide(ms, S[0] * S[1]), S[2])
+M = np.asarray([m1, m2, m3]).transpose()
+
+n1 = np.array([x - (x > S[0]/2) * S[0] for x in m1])
+n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
+n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
+N = np.asarray([n1, n2, n3]).transpose()
+
+r = M @ np.linalg.inv(np.diag(S)) @ np.transpose(R)
+G = 2. * m.pi * N @ np.linalg.inv(R)
+G2 = np.sum(G * G, axis=1)
+G2 = np.reshape(G2, (G2.size, 1))
+
+vecsFromCenter = r - np.ones((np.prod(S), 1)) * cellCenter
+dr2 = np.sum(vecsFromCenter * vecsFromCenter, 1)
+dr = np.sqrt(dr2)
+
+
+# In[34]:
+
+
+def cI(input):
+    out = np.zeros(input.shape, dtype = "complex_")
+    for col in range(np.size(input, 1)):
+        out[:,col] = fft3(input[:,col], S, 1)
+    
+    return out
+
+
+# In[35]:
+
+
+def cJ(input):
+    norm = 1. / np.prod(S)
+    out = np.zeros(input.shape, dtype = "complex_")
+    for col in range(np.size(input, 1)):
+        out[:,col] = norm * fft3(input[:,col], S, -1)
+    
+    return out
+
+
+# In[36]:
+
+
+def L(input):
+    return -np.linalg.det(R) * (G2 @ np.ones((1, np.size(input, 1)))) * input
+
+
+# In[37]:
+
+
+def cIdag(input):
+    out = np.zeros(input.shape, dtype = "complex_")
+    for col in range(np.size(input, 1)):
+        out[:,col] = fft3(input[:,col], S, -1)
+    
+    return out
+
+
+# In[38]:
+
+
+def cJdag(input):
+    norm = 1. / np.prod(S)
+    out = np.zeros(input.shape, dtype = "complex_")
+    for col in range(np.size(input, 1)):
+        out[:,col] = norm * fft3(input[:,col], S, 1)
+    
+    return out
+
+
+# In[39]:
+
+
+sigma1 = 0.75
+sigma2 = 0.5
+g1 = Gaussian(dr, sigma1)
+g2 = Gaussian(dr, sigma2)
+n = g2 - g1
+n = np.reshape(n, (n.size, 1))
+
+print ("Normalization check on g1: ", np.sum(g1) * np.linalg.det(R) / np.prod(S))
+print ("Normalization check on g2: ", np.sum(g2) * np.linalg.det(R) / np.prod(S))
+print ("Total charge check: ", np.sum(n) * np.linalg.det(R) / np.prod(S))
+
+phi = Poisson(n)
+
+Unum = 0.5 * np.real(cJ(phi).transpose().conjugate() @ O(cJ(n)))
+Uanal=((1./sigma1+1./sigma2)/2.- np.sqrt(2.) / np.sqrt(sigma1*sigma1 + sigma2*sigma2))/np.sqrt(m.pi)
+print('Numeric, analytic Coulomb energy:', Unum[0, 0], Uanal)
+
+
+# In[40]:
+
+
+V = 2. * dr2
+V = np.reshape(V, (V.size, 1))
+
+
+# In[41]:
+
+
+Vdual=cJdag(O(cJ(V)))
+
+
+# In[42]:
+
+
+def diagouter(A, B):
+    return np.sum(A*B.conjugate(),axis=1)
+
+
+# In[43]:
+
+
+def getE(W):
+    U = W.transpose().conjugate() @ O(W)
+    Uinv = np.linalg.inv(U)
+    IW = cI(W)
+    n = diagouter(IW @ Uinv, IW)
+    E = np.real(-0.5 * np.sum(diagouter(L(W @ Uinv), W)) + Vdual.transpose().conjugate() @ n)
+    return E
+
+
+# In[44]:
+
+
+def Diagprod(a, B):
+    return (a @ np.ones((1, np.size(B, axis = 1)))) * B
+
+
+# In[45]:
+
+
+def H(W):
+    return -0.5 * L(W) + cIdag(Diagprod(Vdual, cI(W)))
+
+
+# In[46]:
+
+
+def getgrad(W):
+    U = W.transpose().conjugate() @ O(W)
+    Uinv = np.linalg.inv(U)
+    HW = H(W)  
+    return (HW - (O(W) @ Uinv) @ (W.transpose().conjugate() @ HW)) @ Uinv
+
+
+# In[47]:
+
+
+def orthogonalize(W):
+    U = W.transpose().conjugate() @ O(W)
+    return W @ np.linalg.inv(splalg.sqrtm(U))
+
+
+# In[48]:
+
+
+def sd(W, Nit):
+    alfa = 0.00003
+    
+    for i in range(Nit):
+        W = W - alfa * getgrad(W)
+    
+    return W
+
+
+# In[49]:
+
+
+def getPsi(W):
+    Y = orthogonalize(W)
+    mu = Y.transpose().conjugate() @ H(Y)
+    epsilon, D = np.linalg.eig(mu)
+    epsilon = np.real(epsilon)
+    
+    idx = epsilon.argsort()[::]   
+    epsilon = epsilon[idx]
+    D = D[:,idx]
+    
+    return Y @ D, epsilon
+
+
+# In[50]:
+
+
+X = np.asarray([[0, 0, 0], [4, 0, 0]])
+Sf = np.sum(np.exp(-1j * G @ X.transpose()), axis = 1)
+
+Z = 1
+sigma1 = 0.25
+
+g1 = Z * Gaussian(dr.transpose(), sigma1)
+g1 = np.reshape(g1, (g1.size, 1))
+n = cI(cJ(g1) * Sf)
+n = np.real(n)
+
+
+# In[51]:
+
+
+Ns = 4
+np.random.seed(2004)
+
+W =(np.random.randn(np.prod(S),Ns) + 1j * np.random.randn(np.prod(S),Ns))
+W = np.asarray(orthogonalize(W))
+
+
+# In[52]:
+
+
+W = sd(W,600)
+
+
+# In[53]:
+
+
+Psi, epsilon = getPsi(W)
+
+
+# In[54]:
+
+
+epsilon
+
+
+# In[55]:
+
+
+for i in range(4): 
+    dat = Psi[:,i]
+    dat = np.reshape(dat, (dat.size, 1))
+    dat = np.abs(cI(dat))
+    dat = dat * dat    
+    # TODO: plot it!
 
 
 # In[ ]:
