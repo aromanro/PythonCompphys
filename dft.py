@@ -599,6 +599,16 @@ f = 2
 # In[57]:
 
 
+def getgrad(W):
+    U = W.transpose().conjugate() @ O(W)
+    Uinv = np.linalg.inv(U)
+    HW = H(W)  
+    return f * (HW - (O(W) @ Uinv) @ (W.transpose().conjugate() @ HW)) @ Uinv
+
+
+# In[58]:
+
+
 def PoissonSolve(inp):
     if inp.ndim == 1:
         n = np.reshape(inp, (inp.size, 1))
@@ -608,7 +618,7 @@ def PoissonSolve(inp):
     return -4. * m.pi * Linv(O(cJ(n)))
 
 
-# In[58]:
+# In[59]:
 
 
 def excVWN(n):
@@ -628,7 +638,7 @@ def excVWN(n):
     return -X1/rs + A*(np.log(x * x / X) +2 * b / Q * np.arctan(Q/(2 * x+b)) - (b*x0)/X0*(np.log((x-x0)*(x-x0)/X)+2*(2*x0+b)/Q*np.arctan(Q/(2*x+b))))
 
 
-# In[59]:
+# In[60]:
 
 
 def getE(W):
@@ -646,7 +656,7 @@ def getE(W):
     return E
 
 
-# In[60]:
+# In[61]:
 
 
 def excpVWN(n):
@@ -668,7 +678,7 @@ def excpVWN(n):
     return (-rs/(3.*n))* dx * (2.*X1/(rs*x)+A*(2./x-(2.*x+b)/X-4.*b/(Q*Q+(2.*x+b)*(2.*x+b))-(b*x0)/X0*(2./(x-x0)-(2.*x+b)/X-4.*(2.*x0+b)/(Q*Q+(2*x+b)*(2*x+b)))))
 
 
-# In[61]:
+# In[62]:
 
 
 def H(W):
@@ -688,7 +698,7 @@ def H(W):
     return -0.5 * L(W) + cIdag(Diagprod(Veff, IW))
 
 
-# In[62]:
+# In[63]:
 
 
 np.random.seed(100)
@@ -697,31 +707,31 @@ W = np.random.randn(np.prod(S),Ns) + 1j * np.random.randn(np.prod(S),Ns)
 W = orthogonalize(W)
 
 
-# In[63]:
+# In[64]:
 
 
 W = sd(W,600)
 
 
-# In[64]:
+# In[65]:
 
 
 Psi, epsilon = getPsi(W)
 
 
-# In[65]:
+# In[66]:
 
 
 epsilon
 
 
-# In[66]:
+# In[67]:
 
 
 print('Total energy:', getE(W)[0])
 
 
-# In[67]:
+# In[68]:
 
 
 for i in range(4): 
