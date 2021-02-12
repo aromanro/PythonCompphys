@@ -154,14 +154,19 @@ def O(input):
 # In[17]:
 
 
-def L(input):
+def L(input):    
     return -np.linalg.det(R) * G2 * input
 
 
 # In[18]:
 
 
-def Linv(input):
+def Linv(inp):
+    if inp.ndim == 1:
+        input = np.reshape(inp, (inp.size, 1))
+    else:
+        input = inp
+        
     old_settings = np.seterr(divide='ignore', invalid='ignore')
     result = -1. / np.linalg.det(R) * input / np.reshape(G2, input.shape)
     result[0] = 0
@@ -172,7 +177,12 @@ def Linv(input):
 # In[19]:
 
 
-def Poisson(n):
+def Poisson(inp):
+    if inp.ndim == 1:
+        n = np.reshape(inp, (inp.size, 1))
+    else:
+        n = inp
+        
     return cI(Linv(-4. * m.pi * O(cJ(n))))
 
 
@@ -195,28 +205,31 @@ print('Numeric, analytic Coulomb energy:', Unum[0,0], Uanal)
 
 def Plot(dat):
 
+    if dat.ndim != 3:
+        dat = np.reshape(dat, S, order='F')
+    
     fig=plt.figure(figsize=(25, 15))
 
-    x = np.arange(0, S[0])
-    y = np.arange(0, S[1])
-    xs, ys = np.meshgrid(x, y)
+    x = np.arange(0, S[1])
+    y = np.arange(0, S[2])
+    xs, ys = np.meshgrid(x, y, indexing='ij')
 
-    toplot1 = np.reshape(dat, S)[:,:,int(S[2]/2)]
+    toplot1 = dat[int(S[0]/2),:,:]
         
     ax1 = fig.add_subplot(1, 3, 1, projection='3d')
     ax1.plot_surface(xs, ys, toplot1, cmap='viridis', edgecolor='none')
 
-    y = np.arange(0, S[2])
-    xs, ys = np.meshgrid(x, y)
+    x = np.arange(0, S[0])
+    xs, ys = np.meshgrid(x, y, indexing='ij')
 
-    toplot2 = np.reshape(dat, S)[:,int(S[1]/2),:]
+    toplot2 = dat[:,int(S[1]/2),:]
     
     ax2 = fig.add_subplot(1, 3, 2, projection='3d')
     ax2.plot_surface(xs, ys, toplot2, cmap='viridis', edgecolor='none')
 
-    x = np.arange(0, S[1])
-    xs, ys = np.meshgrid(x, y)
-    toplot3 = np.reshape(dat, S)[int(S[0]/2),:,:]
+    y = np.arange(0, S[1])
+    xs, ys = np.meshgrid(x, y, indexing='ij')
+    toplot3 = dat[:,:,int(S[2]/2)]
     
     ax3 = fig.add_subplot(1, 3, 3, projection='3d')
     ax3.plot_surface(xs, ys, toplot3, cmap='viridis', edgecolor='none')
@@ -324,8 +337,13 @@ dr = np.sqrt(dr2)
 # In[34]:
 
 
-def cI(input):
-    out = np.zeros(input.shape, dtype = "complex_")
+def cI(inp):
+    if inp.ndim == 1:
+        input = np.reshape(inp, (inp.size, 1))
+    else:
+        input = inp
+        
+    out = np.zeros(input.shape, dtype = "complex_")    
     for col in range(np.size(input, 1)):
         out[:,col] = fft3(input[:,col], S, 1)
     
@@ -335,9 +353,15 @@ def cI(input):
 # In[35]:
 
 
-def cJ(input):
+def cJ(inp):
+    if inp.ndim == 1:
+        input = np.reshape(inp, (inp.size, 1))
+    else:
+        input = inp
+    
     norm = 1. / np.prod(S)
     out = np.zeros(input.shape, dtype = "complex_")
+    
     for col in range(np.size(input, 1)):
         out[:,col] = norm * fft3(input[:,col], S, -1)
     
@@ -347,15 +371,26 @@ def cJ(input):
 # In[36]:
 
 
-def L(input):
+def L(inp):
+    if inp.ndim == 1:
+        input = np.reshape(inp, (inp.size, 1))
+    else:
+        input = inp
+    
     return -np.linalg.det(R) * (G2 @ np.ones((1, np.size(input, 1)))) * input
 
 
 # In[37]:
 
 
-def cIdag(input):
+def cIdag(inp):
+    if inp.ndim == 1:
+        input = np.reshape(inp, (inp.size, 1))
+    else:
+        input = inp
+
     out = np.zeros(input.shape, dtype = "complex_")
+
     for col in range(np.size(input, 1)):
         out[:,col] = fft3(input[:,col], S, -1)
     
@@ -365,14 +400,22 @@ def cIdag(input):
 # In[38]:
 
 
-def cJdag(input):
+def cJdag(inp):
+    if inp.ndim == 1:
+        input = np.reshape(inp, (inp.size, 1))
+    else:
+        input = inp
+    
     norm = 1. / np.prod(S)
     out = np.zeros(input.shape, dtype = "complex_")
+    
     for col in range(np.size(input, 1)):
         out[:,col] = norm * fft3(input[:,col], S, 1)
     
     return out
 
+
+# Test on what we computed already
 
 # In[39]:
 
@@ -394,6 +437,8 @@ Unum = 0.5 * np.real(cJ(phi).transpose().conjugate() @ O(cJ(n)))
 Uanal=((1./sigma1+1./sigma2)/2.- np.sqrt(2.) / np.sqrt(sigma1*sigma1 + sigma2*sigma2))/np.sqrt(m.pi)
 print('Numeric, analytic Coulomb energy:', Unum[0, 0], Uanal)
 
+
+# Let's solve the Schrodinger equation
 
 # In[40]:
 
@@ -477,6 +522,7 @@ def sd(W, Nit):
 def getPsi(W):
     Y = orthogonalize(W)
     mu = Y.transpose().conjugate() @ H(Y)
+    
     epsilon, D = np.linalg.eig(mu)
     epsilon = np.real(epsilon)
     
@@ -484,7 +530,9 @@ def getPsi(W):
     epsilon = epsilon[idx]
     D = D[:,idx]
     
-    return Y @ D, epsilon
+    Psi = Y @ D
+    
+    return Psi, epsilon
 
 
 # In[50]:
@@ -506,10 +554,10 @@ n = np.real(n)
 
 
 Ns = 4
-np.random.seed(2004)
+np.random.seed(100)
 
-W =(np.random.randn(np.prod(S),Ns) + 1j * np.random.randn(np.prod(S),Ns))
-W = np.asarray(orthogonalize(W))
+W = np.random.randn(np.prod(S),Ns) + 1j * np.random.randn(np.prod(S),Ns)
+W = orthogonalize(W)
 
 
 # In[52]:
@@ -534,11 +582,153 @@ epsilon
 
 
 for i in range(4): 
-    dat = Psi[:,i]
-    dat = np.reshape(dat, (dat.size, 1))
-    dat = np.abs(cI(dat))
-    dat = dat * dat    
-    # TODO: plot it!
+    dat = cI(Psi[:,i])
+    dat = np.real(dat.conjugate() * dat)
+    print('State no:', i, 'energy value:', epsilon[i])
+    Plot(dat)
+
+
+# Now, DFT
+
+# In[56]:
+
+
+f = 2
+
+
+# In[57]:
+
+
+def PoissonSolve(inp):
+    if inp.ndim == 1:
+        n = np.reshape(inp, (inp.size, 1))
+    else:
+        n = inp
+        
+    return -4. * m.pi * Linv(O(cJ(n)))
+
+
+# In[58]:
+
+
+def excVWN(n):
+    X1 = 0.75*(3.0/(2.0*m.pi))**(2.0/3.0)
+    A  =  0.0310907
+    x0 = -0.10498
+    b  = 3.72744
+    c  = 12.9352
+    Q  = m.sqrt(4*c-b*b)
+    X0 = x0*x0+b*x0+c
+
+    rs=(4*m.pi/3*n)**(-1./3.)
+  
+    x = np.sqrt(rs)
+    X = x*x+b*x+c
+
+    return -X1/rs + A*(np.log(x * x / X) +2 * b / Q * np.arctan(Q/(2 * x+b)) - (b*x0)/X0*(np.log((x-x0)*(x-x0)/X)+2*(2*x0+b)/Q*np.arctan(Q/(2*x+b))))
+
+
+# In[59]:
+
+
+def getE(W):
+    U = W.transpose().conjugate() @ O(W)
+    Uinv = np.linalg.inv(U)
+    IW = cI(W)
+    
+    n = f * diagouter(IW @ Uinv, IW)
+    ndag = n.transpose().conjugate()
+    
+    Phi = PoissonSolve(n)
+    exc = excVWN(n)
+    
+    E = np.real(-f * 0.5 * np.sum(diagouter(L(W @ Uinv), W)) + Vdual.transpose().conjugate() @ n + 0.5 * ndag @ cJdag(O(Phi)) + ndag @ cJdag(O(cJ(exc))))
+    return E
+
+
+# In[60]:
+
+
+def excpVWN(n):
+    X1 = 0.75*(3.0/(2.0*m.pi))**(2.0/3.0)
+    A  =  0.0310907
+    x0 = -0.10498
+    b  = 3.72744
+    c  = 12.9352
+    Q  = m.sqrt(4.*c-b*b)
+    X0 = x0*x0+b*x0+c
+
+    rs=(4.*m.pi/3. * n)**(-1./3.)
+
+    x=np.sqrt(rs)
+    X=x*x+b*x+c
+
+    dx=0.5/x
+
+    return (-rs/(3.*n))* dx * (2.*X1/(rs*x)+A*(2./x-(2.*x+b)/X-4.*b/(Q*Q+(2.*x+b)*(2.*x+b))-(b*x0)/X0*(2./(x-x0)-(2.*x+b)/X-4.*(2.*x0+b)/(Q*Q+(2*x+b)*(2*x+b)))))
+
+
+# In[61]:
+
+
+def H(W):
+    U = W.transpose().conjugate() @ O(W)
+    Uinv = np.linalg.inv(U)
+    IW = cI(W)
+
+    n = f * diagouter(IW @ Uinv, IW)
+    
+    Phi = PoissonSolve(n)
+  
+    exc = excVWN(n)
+    excp = excpVWN(n)
+
+    Veff = Vdual + cJdag(O(Phi)) + cJdag(O(cJ(exc))) + np.reshape(excp, (excp.size,1)) * cJdag(O(cJ(n)))
+    
+    return -0.5 * L(W) + cIdag(Diagprod(Veff, IW))
+
+
+# In[62]:
+
+
+np.random.seed(100)
+
+W = np.random.randn(np.prod(S),Ns) + 1j * np.random.randn(np.prod(S),Ns)
+W = orthogonalize(W)
+
+
+# In[63]:
+
+
+W = sd(W,600)
+
+
+# In[64]:
+
+
+Psi, epsilon = getPsi(W)
+
+
+# In[65]:
+
+
+epsilon
+
+
+# In[66]:
+
+
+print('Total energy:', getE(W)[0])
+
+
+# In[67]:
+
+
+for i in range(4): 
+    dat = cI(Psi[:,i])
+    dat = np.real(dat.conjugate() * dat)
+    print('State no:', i, 'energy value:', epsilon[i])
+    Plot(dat)
 
 
 # In[ ]:

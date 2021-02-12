@@ -19,7 +19,7 @@ I also added some info on the blog: https://compphys.go.ro/car-parrinello-quantu
 
 The [DFT notebook](dft.ipynb)
 It's work in progress, hopefully it will cover the assignments of Thomas Arias lectures.
-For now, you'll find in there only the first assignment solved, on the Poisson equation and the second one up to solving the Schrodinger eqn (no plotting yet) - dft will follow hopefully soon.
+For now, you'll find in there only the first assignment solved, on the Poisson equation and the second one (dft might be wrong, I'll have to check it, there are slight differences compared with the octave code).
 
 ### Python scripts
 
