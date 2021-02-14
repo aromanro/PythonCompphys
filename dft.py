@@ -1011,6 +1011,8 @@ plt.show()
 
 
 W=Wcg1
+W=orthogonalize(W)
+W, E = pccg(W,50,3)
 
 Psi, epsilon = getPsi(W)
 
