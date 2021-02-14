@@ -19,7 +19,7 @@ I also added some info on the blog: https://compphys.go.ro/car-parrinello-quantu
 
 The [DFT notebook](dft.ipynb)
 It's work in progress, hopefully it will cover the assignments of Thomas Arias lectures.
-For now, you'll find in there only the first assignment solved, on the Poisson equation and the second one.
+For now, you'll find in there only the first, second and the first part of the third assignment in there.
 
 ### Python scripts
 

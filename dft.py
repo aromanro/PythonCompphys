@@ -29,8 +29,8 @@ import scipy as sp
 import scipy.linalg as splalg
 import matplotlib.pyplot as plt
 get_ipython().run_line_magic('matplotlib', 'inline')
-#import os
-#os.environ['CUDA_VISIBLE_DEVICES'] = '-1' #disable gpu usage for now, I have a bug
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1' #disable gpu usage for now, I have a bug (also the video driver has a bug - first it crashed from something wrong in the code, then in the end I managed to crash it with no issue in the code)
 
 
 # In[2]:
@@ -208,7 +208,7 @@ def Plot(dat):
     if dat.ndim != 3:
         dat = np.reshape(dat, S, order='F')
     
-    fig=plt.figure(figsize=(25, 15))
+    fig=plt.figure(figsize=(35, 25))
 
     x = np.arange(0, S[1])
     y = np.arange(0, S[2])
@@ -490,10 +490,12 @@ def H(W):
 
 
 def getgrad(W):
-    U = W.transpose().conjugate() @ O(W)
+    Wadj = W.transpose().conjugate()
+    OW = O(W)
+    U = Wadj @ OW
     Uinv = np.linalg.inv(U)
     HW = H(W)  
-    return (HW - (O(W) @ Uinv) @ (W.transpose().conjugate() @ HW)) @ Uinv
+    return (HW - (OW @ Uinv) @ (Wadj @ HW)) @ Uinv
 
 
 # In[47]:
@@ -600,10 +602,12 @@ f = 2
 
 
 def getgrad(W):
-    U = W.transpose().conjugate() @ O(W)
+    Wadj = W.transpose().conjugate()
+    OW = O(W)
+    U = Wadj @ OW
     Uinv = np.linalg.inv(U)
     HW = H(W)  
-    return f * (HW - (O(W) @ Uinv) @ (W.transpose().conjugate() @ HW)) @ Uinv
+    return f * (HW - (OW @ Uinv) @ (Wadj @ HW)) @ Uinv
 
 
 # In[58]:
@@ -652,8 +656,10 @@ def getE(W):
     Phi = PoissonSolve(n)
     exc = excVWN(n)
     
-    E = np.real(-f * 0.5 * np.sum(diagouter(L(W @ Uinv), W)) + Vdual.transpose().conjugate() @ n + 0.5 * ndag @ cJdag(O(Phi)) + ndag @ cJdag(O(cJ(exc))))
-    return E
+    PhiExc = 0.5 * Phi + cJ(exc)
+    
+    E = np.real(-f * 0.5 * np.sum(diagouter(L(W @ Uinv), W)) + Vdual.transpose().conjugate() @ n + ndag @ cJdag(O(PhiExc)))
+    return E[0]
 
 
 # In[61]:
@@ -692,8 +698,10 @@ def H(W):
   
     exc = excVWN(n)
     excp = excpVWN(n)
+    
+    PhiExc = Phi + cJ(exc)
 
-    Veff = Vdual + cJdag(O(Phi)) + cJdag(O(cJ(exc))) + np.reshape(excp, (excp.size,1)) * cJdag(O(cJ(n)))
+    Veff = Vdual + cJdag(O(PhiExc)) + np.reshape(excp, (excp.size, 1)) * cJdag(O(cJ(n)))
     
     return -0.5 * L(W) + cIdag(Diagprod(Veff, IW))
 
@@ -728,13 +736,285 @@ epsilon
 # In[67]:
 
 
-print('Total energy:', getE(W)[0])
+print('Total energy:', getE(W))
 
 
 # In[68]:
 
 
 for i in range(4): 
+    dat = cI(Psi[:,i])
+    dat = np.real(dat.conjugate() * dat)
+    print('State no:', i, 'energy value:', epsilon[i])
+    Plot(dat)
+
+
+# ### Assignment 3
+
+# First part: Advanced techniques for numerical minimization
+
+# In[69]:
+
+
+R=np.diag([16, 16, 16])
+
+S = np.array([64, 64, 64])
+ms = np.arange(np.prod(S))
+m1 = np.remainder(ms, S[0])
+m2 = np.remainder(np.floor_divide(ms, S[0]), S[1])
+m3 = np.remainder(np.floor_divide(ms, S[0] * S[1]), S[2])
+M = np.asarray([m1, m2, m3]).transpose()
+
+n1 = np.array([x - (x > S[0]/2) * S[0] for x in m1])
+n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
+n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
+N = np.asarray([n1, n2, n3]).transpose()
+
+r = M @ np.linalg.inv(np.diag(S)) @ np.transpose(R)
+G = 2. * m.pi * N @ np.linalg.inv(R)
+G2 = np.sum(G * G, axis=1)
+G2 = np.reshape(G2, (G2.size, 1))
+
+cellCenter = np.sum(R, axis = 1) / 2
+
+vecsFromCenter = r - np.ones((np.prod(S), 1)) * cellCenter
+dr2 = np.sum(vecsFromCenter * vecsFromCenter, 1)
+dr = np.sqrt(dr2)
+
+X = np.asarray([[0, 0, 0], [1.5, 0, 0]])
+Sf = np.sum(np.exp(-1j * G @ X.transpose()), axis = 1)
+
+Z = 1
+f = 2
+
+V = 2. * dr2
+V = np.reshape(V, (V.size, 1))
+
+Vdual=cJdag(O(cJ(V)))
+
+
+# In[70]:
+
+
+def sd(Win, Nit):
+    alfa = 0.00003
+    
+    W = Win
+    
+    Elist = np.zeros(Nit)
+    
+    for i in range(Nit):
+        W = W - alfa * getgrad(W)
+        E = getE(W)
+        Elist[i] = E
+        print("Niter:", i, "E:", E)
+    
+    return W, Elist
+
+
+# In[71]:
+
+
+Ns = 10
+
+np.random.seed(100)
+
+W = np.random.randn(np.prod(S),Ns) + 1j * np.random.randn(np.prod(S),Ns)
+W = orthogonalize(W)
+
+W, Elist = sd(W, 30)
+
+
+# In[72]:
+
+
+W=orthogonalize(W)
+
+
+# In[73]:
+
+
+def Dot(a, b):
+    return np.real(np.trace(a.transpose().conjugate() @ b))
+
+
+# In[74]:
+
+
+def lm(Win, Nit):
+    alphat = 0.00003
+    
+    W = Win
+    Elist = np.zeros(Nit)
+    
+    for i in range(Nit):
+        g = getgrad(W)
+        if i > 0:
+            anglecos = Dot(g, d) / m.sqrt(Dot(g,g) * Dot(d,d))
+            print("Anglecos:", anglecos)
+        
+        d = -g
+    
+        gt = getgrad(W + alphat * d)
+    
+        dotdif = Dot(g-gt, d)
+        if np.abs(dotdif) < 1E-20:
+            dotdif = 1E-20 * m.sign(dotdif)
+    
+        alpha = alphat * Dot(g,d) / dotdif
+    
+        W = W + alpha * d
+    
+        Elist[i] = getE(W)
+        print("Niter:", i, "E:", Elist[i])
+    
+    return W, Elist
+
+
+# In[75]:
+
+
+Wlm, Elm = lm(W, 120)
+
+
+# In[76]:
+
+
+def K(input):
+    return input / (1. + G2)
+
+
+# The preconditioned line minimization is the same as the line minimization above, but with the direction changed:
+
+# In[77]:
+
+
+def pclm(Win, Nit):
+    alphat = 0.00003
+    
+    W = Win
+    Elist = np.zeros(Nit)
+    
+    for i in range(Nit):
+        g = getgrad(W)
+        if i > 0:
+            anglecos = Dot(g, d) / m.sqrt(Dot(g,g) * Dot(d,d))
+            print("Anglecos:", anglecos)
+        
+        d = -K(g)
+    
+        gt = getgrad(W + alphat * d)
+    
+        dotdif = Dot(g-gt, d)
+        if np.abs(dotdif) < 1E-20:
+            dotdif = 1E-20 * m.sign(dotdif)
+    
+        alpha = alphat * Dot(g,d) / dotdif
+    
+        W = W + alpha * d
+    
+        Elist[i] = getE(W)
+        print("Niter:", i, "E:", Elist[i])
+    
+    return W, Elist
+
+
+# In[78]:
+
+
+Wpclm, Epclm = pclm(W, 120)
+
+
+# In[79]:
+
+
+def pccg(Win, Nit, cgform):
+    alphat = 0.00003
+    
+    W = Win
+    Elist = np.zeros(Nit)
+    
+    for i in range(Nit):
+        g = getgrad(W)
+        theK = K(g)
+        
+        if i > 0:
+            anglecos = Dot(g, d) / m.sqrt(Dot(g,g) * Dot(d,d))
+            cgtest = Dot(g, oldK) / m.sqrt(Dot(g, theK) * Dot(oldg, oldK)) 
+            print("Anglecos:", anglecos, "cgtest:", cgtest)
+        
+            if cgform == 1: # Fletcher-Reeves
+                beta = Dot(g, theK) / Dot(oldg, oldK)
+            elif cgform == 2: # Polak-Ribiere
+                beta = Dot(g-oldg, theK)/Dot(oldg, oldK)
+            else: # Hestenes-Stiefel
+                difg = g-oldg
+                beta = Dot(difg, theK)/Dot(difg, d)        
+        else:
+            d = -theK
+            beta = 0
+            
+        oldg = g
+        oldK = theK
+    
+        d = -theK + beta * d
+        
+        gt = getgrad(W + alphat * d)
+    
+        dotdif = Dot(g-gt,d)
+        if np.abs(dotdif) < 1E-20:
+            dotdif = 1E-20 * m.sign(dotdif)
+    
+        alpha = alphat * Dot(g,d) / dotdif
+    
+        W = W + alpha * d
+    
+        Elist[i] = getE(W)
+        print("Niter:", i, "E:", Elist[i])
+    
+    return W, Elist
+
+
+# In[80]:
+
+
+Wcg1, Ecg1 = pccg(W,120,1)
+
+
+# In[81]:
+
+
+Wcg2, Ecg2 = pccg(W,120,2)
+
+
+# In[82]:
+
+
+Wcg3, Ecg3 = pccg(W,120,3)
+
+
+# In[83]:
+
+
+plt.semilogy(range(Elm.size), Elm-43.33711477820)
+plt.semilogy(range(Epclm.size), Epclm-43.33711477820)
+plt.semilogy(range(Ecg1.size), Ecg1-43.33711477820)
+plt.semilogy(range(Ecg2.size), Ecg3-43.33711477820)
+plt.semilogy(range(Ecg3.size), Ecg3-43.33711477820)
+
+plt.legend(['lm','pclm', 'pccg-FR', 'pccg-PR', 'pccg-HS'])
+
+plt.show()
+
+
+# In[84]:
+
+
+W=Wcg1
+
+Psi, epsilon = getPsi(W)
+
+for i in range(Ns): 
     dat = cI(Psi[:,i])
     dat = np.real(dat.conjugate() * dat)
     print('State no:', i, 'energy value:', epsilon[i])
