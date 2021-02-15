@@ -19,7 +19,7 @@ I also added some info on the blog: https://compphys.go.ro/car-parrinello-quantu
 
 The [DFT notebook](dft.ipynb)
 It's work in progress, hopefully it will cover the assignments of Thomas Arias lectures.
-For now, you'll find in there only the first, second and the first part of the third assignment in there.
+For now, you'll find in there only the first, second and the third assignment in there. The fourth will follow, then maybe I'll add some more comments.
 
 ### Python scripts
 

@@ -268,7 +268,7 @@ g1 = Z * Gaussian(dr, sigma1)
 # In[27]:
 
 
-n = cI(cJ(g1)* Sf)
+n = cI(cJ(g1) * Sf)
 n = np.real(n)
 
 
@@ -781,9 +781,6 @@ vecsFromCenter = r - np.ones((np.prod(S), 1)) * cellCenter
 dr2 = np.sum(vecsFromCenter * vecsFromCenter, 1)
 dr = np.sqrt(dr2)
 
-X = np.asarray([[0, 0, 0], [1.5, 0, 0]])
-Sf = np.sum(np.exp(-1j * G @ X.transpose()), axis = 1)
-
 Z = 1
 f = 2
 
@@ -859,7 +856,7 @@ def lm(Win, Nit):
     
         dotdif = Dot(g-gt, d)
         if np.abs(dotdif) < 1E-20:
-            dotdif = 1E-20 * m.sign(dotdif)
+            dotdif = 1E-20 * np.sign(dotdif)
     
         alpha = alphat * Dot(g,d) / dotdif
     
@@ -907,7 +904,7 @@ def pclm(Win, Nit):
     
         dotdif = Dot(g-gt, d)
         if np.abs(dotdif) < 1E-20:
-            dotdif = 1E-20 * m.sign(dotdif)
+            dotdif = 1E-20 * np.sign(dotdif)
     
         alpha = alphat * Dot(g,d) / dotdif
     
@@ -963,7 +960,7 @@ def pccg(Win, Nit, cgform):
     
         dotdif = Dot(g-gt,d)
         if np.abs(dotdif) < 1E-20:
-            dotdif = 1E-20 * m.sign(dotdif)
+            dotdif = 1E-20 * np.sign(dotdif)
     
         alpha = alphat * Dot(g,d) / dotdif
     
@@ -1021,6 +1018,151 @@ for i in range(Ns):
     dat = np.real(dat.conjugate() * dat)
     print('State no:', i, 'energy value:', epsilon[i])
     Plot(dat)
+
+
+# Let's try for Hydrogen first:
+
+# In[85]:
+
+
+R=np.diag([16, 16, 16])
+
+S = np.array([64, 64, 64])
+ms = np.arange(np.prod(S))
+m1 = np.remainder(ms, S[0])
+m2 = np.remainder(np.floor_divide(ms, S[0]), S[1])
+m3 = np.remainder(np.floor_divide(ms, S[0] * S[1]), S[2])
+M = np.asarray([m1, m2, m3]).transpose()
+
+n1 = np.array([x - (x > S[0]/2) * S[0] for x in m1])
+n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
+n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
+N = np.asarray([n1, n2, n3]).transpose()
+
+r = M @ np.linalg.inv(np.diag(S)) @ np.transpose(R)
+G = 2. * m.pi * N @ np.linalg.inv(R)
+G2 = np.sum(G * G, axis=1)
+G2 = np.reshape(G2, (G2.size, 1))
+
+cellCenter = np.sum(R, axis = 1) / 2
+
+vecsFromCenter = r - np.ones((np.prod(S), 1)) * cellCenter
+dr2 = np.sum(vecsFromCenter * vecsFromCenter, 1)
+dr = np.sqrt(dr2)
+
+Z = 1
+f = 1
+
+X = np.asarray([[0, 0, 0]])
+
+Sf = np.sum(np.exp(-1j * G @ X.transpose()), axis = 1)
+Sf = np.reshape(Sf, (Sf.size, 1))
+
+sigma1 = 0.25
+g1 = Z * Gaussian(dr, sigma1)
+
+n = cI(cJ(g1) * Sf)
+n = np.real(n)
+
+phi = Poisson(n)
+
+Uself = Z*Z/(2.*m.sqrt(m.pi))*(1./sigma1)*np.size(X,0)
+
+Unum = 0.5 * np.real(cJ(phi).transpose().conjugate() @ O(cJ(n)))
+Ewald = (Unum - Uself)[0,0]
+print('Ewald energy:', Ewald)
+print('Unum:', Unum[0,0])
+print('Uself:', Uself)
+
+
+# In[86]:
+
+
+old_settings = np.seterr(divide='ignore', invalid='ignore')
+Vps=-4.*m.pi*Z/G2
+Vps[0]=0.
+np.seterr(**old_settings)
+
+Vps = np.reshape(Vps, (Vps.size, 1))
+Vdual = cJdag(Vps * Sf)
+
+Ns = 1
+
+np.random.seed(100)
+
+W = np.random.randn(np.prod(S),Ns) + 1j * np.random.randn(np.prod(S),Ns)
+W = orthogonalize(W)
+
+W, Elist = sd(W, 25)
+W = orthogonalize(W)
+
+W, Elist = pccg(W,25,1)
+
+Psi, epsilon = getPsi(W)
+
+for i in range(Ns):
+    print('State:', i, 'Energy:', epsilon[i])
+    
+print('\nTotal energy:', getE(W) + Ewald, "NIST value: -0.445671")
+
+
+# Now the Hydrogen molecule:
+
+# In[87]:
+
+
+f = 2
+X = np.asarray([[0, 0, 0], [1.5, 0, 0]])
+
+Sf = np.sum(np.exp(-1j * G @ X.transpose()), axis = 1)
+Sf = np.reshape(Sf, (Sf.size, 1))
+
+sigma1 = 0.25
+g1 = Z * Gaussian(dr, sigma1)
+
+n = cI(cJ(g1) * Sf)
+n = np.real(n)
+
+phi = Poisson(n)
+
+Uself = Z*Z/(2.*m.sqrt(m.pi))*(1./sigma1)*np.size(X,0)
+
+Unum = 0.5 * np.real(cJ(phi).transpose().conjugate() @ O(cJ(n)))
+Ewald = (Unum - Uself)[0,0]
+print('Ewald energy:', Ewald)
+print('Unum:', Unum[0,0])
+print('Uself:', Uself)
+
+
+# In[88]:
+
+
+old_settings = np.seterr(divide='ignore', invalid='ignore')
+Vps=-4.*m.pi*Z/G2
+Vps[0]=0.
+np.seterr(**old_settings)
+
+Vps = np.reshape(Vps, (Vps.size, 1))
+Vdual = cJdag(Vps * Sf)
+
+Ns = 1
+
+np.random.seed(100)
+
+W = np.random.randn(np.prod(S),Ns) + 1j * np.random.randn(np.prod(S),Ns)
+W = orthogonalize(W)
+
+W, Elist = sd(W, 25)
+W = orthogonalize(W)
+
+W, Elist = pccg(W,25,1)
+
+Psi, epsilon = getPsi(W)
+
+for i in range(Ns):
+    print('State:', i, 'Energy:', epsilon[i])
+    
+print('\nTotal energy:', getE(W) + Ewald, "Expected: -1.136")
 
 
 # In[ ]:
