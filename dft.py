@@ -29,8 +29,8 @@ import scipy as sp
 import scipy.linalg as splalg
 import matplotlib.pyplot as plt
 get_ipython().run_line_magic('matplotlib', 'inline')
-import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1' #disable gpu usage for now, I have a bug (also the video driver has a bug - first it crashed from something wrong in the code, then in the end I managed to crash it with no issue in the code)
+#import os
+#os.environ['CUDA_VISIBLE_DEVICES'] = '-1' #disable gpu usage
 
 
 # In[2]:
@@ -62,8 +62,8 @@ R=np.diag([6, 6, 6])
 # In[5]:
 
 
-r = M @ np.linalg.inv(np.diag(S)) @ np.transpose(R)
-G = 2 * m.pi * N @ np.linalg.inv(R)
+r = M @ splalg.inv(np.diag(S)) @ np.transpose(R)
+G = 2 * m.pi * N @ splalg.inv(R)
 G2 = np.sum(G * G, axis=1)
 G2 = np.reshape(G2, (G2.size, 1))
 
@@ -103,19 +103,19 @@ n = np.reshape(n, (n.size, 1))
 # In[10]:
 
 
-print ("Normalization check on g1: ", np.sum(g1) * np.linalg.det(R) / np.prod(S))
+print ("Normalization check on g1: ", np.sum(g1) * splalg.det(R) / np.prod(S))
 
 
 # In[11]:
 
 
-print ("Normalization check on g2: ", np.sum(g2) * np.linalg.det(R) / np.prod(S))
+print ("Normalization check on g2: ", np.sum(g2) * splalg.det(R) / np.prod(S))
 
 
 # In[12]:
 
 
-print ("Total charge check: ", np.sum(n) * np.linalg.det(R) / np.prod(S))
+print ("Total charge check: ", np.sum(n) * splalg.det(R) / np.prod(S))
 
 
 # In[13]:
@@ -148,14 +148,14 @@ def cJ(input):
 
 
 def O(input):
-    return np.linalg.det(R) * input
+    return splalg.det(R) * input
 
 
 # In[17]:
 
 
 def L(input):    
-    return -np.linalg.det(R) * G2 * input
+    return -splalg.det(R) * G2 * input
 
 
 # In[18]:
@@ -168,7 +168,7 @@ def Linv(inp):
         input = inp
         
     old_settings = np.seterr(divide='ignore', invalid='ignore')
-    result = -1. / np.linalg.det(R) * input / np.reshape(G2, input.shape)
+    result = -1. / splalg.det(R) * input / np.reshape(G2, input.shape)
     result[0] = 0
     np.seterr(**old_settings)
     return result    
@@ -324,8 +324,8 @@ n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
 n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
 N = np.asarray([n1, n2, n3]).transpose()
 
-r = M @ np.linalg.inv(np.diag(S)) @ np.transpose(R)
-G = 2. * m.pi * N @ np.linalg.inv(R)
+r = M @ splalg.inv(np.diag(S)) @ np.transpose(R)
+G = 2. * m.pi * N @ splalg.inv(R)
 G2 = np.sum(G * G, axis=1)
 G2 = np.reshape(G2, (G2.size, 1))
 
@@ -377,7 +377,7 @@ def L(inp):
     else:
         input = inp
     
-    return -np.linalg.det(R) * (G2 @ np.ones((1, np.size(input, 1)))) * input
+    return -splalg.det(R) * (G2 @ np.ones((1, np.size(input, 1)))) * input
 
 
 # In[37]:
@@ -427,9 +427,9 @@ g2 = Gaussian(dr, sigma2)
 n = g2 - g1
 n = np.reshape(n, (n.size, 1))
 
-print ("Normalization check on g1: ", np.sum(g1) * np.linalg.det(R) / np.prod(S))
-print ("Normalization check on g2: ", np.sum(g2) * np.linalg.det(R) / np.prod(S))
-print ("Total charge check: ", np.sum(n) * np.linalg.det(R) / np.prod(S))
+print ("Normalization check on g1: ", np.sum(g1) * splalg.det(R) / np.prod(S))
+print ("Normalization check on g2: ", np.sum(g2) * splalg.det(R) / np.prod(S))
+print ("Total charge check: ", np.sum(n) * splalg.det(R) / np.prod(S))
 
 phi = Poisson(n)
 
@@ -465,7 +465,7 @@ def diagouter(A, B):
 
 def getE(W):
     U = W.transpose().conjugate() @ O(W)
-    Uinv = np.linalg.inv(U)
+    Uinv = splalg.inv(U)
     IW = cI(W)
     n = diagouter(IW @ Uinv, IW)
     E = np.real(-0.5 * np.sum(diagouter(L(W @ Uinv), W)) + Vdual.transpose().conjugate() @ n)
@@ -493,7 +493,7 @@ def getgrad(W):
     Wadj = W.transpose().conjugate()
     OW = O(W)
     U = Wadj @ OW
-    Uinv = np.linalg.inv(U)
+    Uinv = splalg.inv(U)
     HW = H(W)  
     return (HW - (OW @ Uinv) @ (Wadj @ HW)) @ Uinv
 
@@ -503,7 +503,7 @@ def getgrad(W):
 
 def orthogonalize(W):
     U = W.transpose().conjugate() @ O(W)
-    return W @ np.linalg.inv(splalg.sqrtm(U))
+    return W @ splalg.inv(splalg.sqrtm(U))
 
 
 # In[48]:
@@ -525,7 +525,7 @@ def getPsi(W):
     Y = orthogonalize(W)
     mu = Y.transpose().conjugate() @ H(Y)
     
-    epsilon, D = np.linalg.eig(mu)
+    epsilon, D = splalg.eig(mu)
     epsilon = np.real(epsilon)
     
     idx = epsilon.argsort()[::]   
@@ -605,7 +605,7 @@ def getgrad(W):
     Wadj = W.transpose().conjugate()
     OW = O(W)
     U = Wadj @ OW
-    Uinv = np.linalg.inv(U)
+    Uinv = splalg.inv(U)
     HW = H(W)  
     return f * (HW - (OW @ Uinv) @ (Wadj @ HW)) @ Uinv
 
@@ -647,7 +647,7 @@ def excVWN(n):
 
 def getE(W):
     U = W.transpose().conjugate() @ O(W)
-    Uinv = np.linalg.inv(U)
+    Uinv = splalg.inv(U)
     IW = cI(W)
     
     n = f * diagouter(IW @ Uinv, IW)
@@ -689,7 +689,7 @@ def excpVWN(n):
 
 def H(W):
     U = W.transpose().conjugate() @ O(W)
-    Uinv = np.linalg.inv(U)
+    Uinv = splalg.inv(U)
     IW = cI(W)
 
     n = f * diagouter(IW @ Uinv, IW)
@@ -770,8 +770,8 @@ n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
 n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
 N = np.asarray([n1, n2, n3]).transpose()
 
-r = M @ np.linalg.inv(np.diag(S)) @ np.transpose(R)
-G = 2. * m.pi * N @ np.linalg.inv(R)
+r = M @ splalg.inv(np.diag(S)) @ np.transpose(R)
+G = 2. * m.pi * N @ splalg.inv(R)
 G2 = np.sum(G * G, axis=1)
 G2 = np.reshape(G2, (G2.size, 1))
 
@@ -1039,8 +1039,8 @@ n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
 n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
 N = np.asarray([n1, n2, n3]).transpose()
 
-r = M @ np.linalg.inv(np.diag(S)) @ np.transpose(R)
-G = 2. * m.pi * N @ np.linalg.inv(R)
+r = M @ splalg.inv(np.diag(S)) @ np.transpose(R)
+G = 2. * m.pi * N @ splalg.inv(R)
 G2 = np.sum(G * G, axis=1)
 G2 = np.reshape(G2, (G2.size, 1))
 
