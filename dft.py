@@ -16,7 +16,7 @@
 # 
 # For now this is work in progress, I'll add more to it (including comments), hopefully it will cover at least as much as the https://github.com/aromanro/DFTQuantumDot project.
 
-# ### The Poisson Equation
+# ## The Poisson Equation
 # 
 # This corresponds to the first assigment and it covers what the https://github.com/aromanro/Poisson project covers (described here: https://compphys.go.ro/solving-poisson-equation/).
 
@@ -25,8 +25,10 @@
 
 import math as m
 import numpy as np
+#impurt cupy as np
 import scipy as sp
 import scipy.linalg as splalg
+#import skcuda.linalg as splalg
 import matplotlib.pyplot as plt
 get_ipython().run_line_magic('matplotlib', 'inline')
 #import os
@@ -305,7 +307,7 @@ print('Unum:', Unum)
 print('Uself:', Uself)
 
 
-# ### Assignment 2: Implement variational solution to Schrodinger's equation and Kohn-Sham equations using steepest descents
+# ## Assignment 2: Implement variational solution to Schrodinger's equation and Kohn-Sham equations using steepest descents
 
 # First, let's repeat initialization similarly as above but with different params:
 
@@ -438,7 +440,7 @@ Uanal=((1./sigma1+1./sigma2)/2.- np.sqrt(2.) / np.sqrt(sigma1*sigma1 + sigma2*si
 print('Numeric, analytic Coulomb energy:', Unum[0, 0], Uanal)
 
 
-# Let's solve the Schrodinger equation
+# #### Let's solve the Schrodinger equation
 
 # In[40]:
 
@@ -590,7 +592,7 @@ for i in range(4):
     Plot(dat)
 
 
-# Now, DFT
+# #### Now, DFT
 
 # In[56]:
 
@@ -749,9 +751,9 @@ for i in range(4):
     Plot(dat)
 
 
-# ### Assignment 3
+# ## Assignment 3
 
-# First part: Advanced techniques for numerical minimization
+# ### First part: Advanced techniques for numerical minimization
 
 # In[69]:
 
@@ -1004,6 +1006,8 @@ plt.legend(['lm','pclm', 'pccg-FR', 'pccg-PR', 'pccg-HS'])
 plt.show()
 
 
+# #### The 'quantum dot':
+
 # In[84]:
 
 
@@ -1020,6 +1024,8 @@ for i in range(Ns):
     Plot(dat)
 
 
+# #### Atoms and molecules
+# 
 # Let's try for Hydrogen first:
 
 # In[85]:
@@ -1165,8 +1171,411 @@ for i in range(Ns):
 print('\nTotal energy:', getE(W) + Ewald, "Expected: -1.136")
 
 
-# In[ ]:
+# ## Assignment 4
+
+# #### Minimal, isotropic spectral representation 
+
+# In[89]:
 
 
+R=np.diag([16, 16, 16])
 
+S = np.array([64, 64, 64])
+ms = np.arange(np.prod(S))
+m1 = np.remainder(ms, S[0])
+m2 = np.remainder(np.floor_divide(ms, S[0]), S[1])
+m3 = np.remainder(np.floor_divide(ms, S[0] * S[1]), S[2])
+M = np.asarray([m1, m2, m3]).transpose()
+
+n1 = np.array([x - (x > S[0]/2) * S[0] for x in m1])
+n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
+n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
+N = np.asarray([n1, n2, n3]).transpose()
+
+r = M @ splalg.inv(np.diag(S)) @ np.transpose(R)
+G = 2. * m.pi * N @ splalg.inv(R)
+G2 = np.sum(G * G, axis=1)
+G2 = np.reshape(G2, (G2.size, 1))
+
+cellCenter = np.sum(R, axis = 1) / 2
+
+vecsFromCenter = r - np.ones((np.prod(S), 1)) * cellCenter
+dr2 = np.sum(vecsFromCenter * vecsFromCenter, 1)
+dr = np.sqrt(dr2)
+
+Z = 1
+f = 1
+
+X = np.asarray([[0, 0, 0]])
+
+Sf = np.sum(np.exp(-1j * G @ X.transpose()), axis = 1)
+Sf = np.reshape(Sf, (Sf.size, 1))
+
+sigma1 = 0.25
+g1 = Z * Gaussian(dr, sigma1)
+
+n = cI(cJ(g1) * Sf)
+n = np.real(n)
+
+phi = Poisson(n)
+
+Uself = Z*Z/(2.*m.sqrt(m.pi))*(1./sigma1)*np.size(X,0)
+
+Unum = 0.5 * np.real(cJ(phi).transpose().conjugate() @ O(cJ(n)))
+Ewald = (Unum - Uself)[0,0]
+print('Ewald energy:', Ewald)
+print('Unum:', Unum[0,0])
+print('Uself:', Uself)
+
+
+# In[90]:
+
+
+eS = np.reshape(S / 2. + 0.5, (S.size, 1))
+edges = np.nonzero(np.any(np.abs(M - np.ones((np.size(M, axis = 0), 1)) @ eS.transpose()) < 1, axis = 1))
+G2mx = np.min(G2[edges])
+active = np.nonzero(G2 < G2mx / 4.)
+G2c = np.reshape(G2[active], (active[0].size, 1))
+print("Compression:", G2.size / G2c.size, "Theoretical:", 1./(4.*m.pi*(1./4.)**3./3.))
+
+
+# In[91]:
+
+
+def L(inp):
+    if inp.ndim == 1:
+        input = np.reshape(inp, (inp.size, 1))
+    else:
+        input = inp
+    
+    if np.size(input, 0) == G2c.size:
+        return -splalg.det(R) * (G2c @ np.ones((1, np.size(input, 1)))) * input        
+    
+    return -splalg.det(R) * (G2 @ np.ones((1, np.size(input, 1)))) * input
+
+
+# In[92]:
+
+
+def K(input):
+    if np.size(input, 0) == G2c.size:
+        return input / (1. + G2c)
+    
+    return input / (1. + G2)
+
+
+# In[93]:
+
+
+def cI(inp):
+    if inp.ndim == 1:
+        input = np.reshape(inp, (inp.size, 1))
+    else:
+        input = inp
+    
+    pS = np.prod(S)
+    out = np.zeros((pS, np.size(input, axis = 1)), dtype = "complex_")
+    
+    if np.size(input, 0) == pS:
+        for col in range(np.size(input, 1)):
+            out[:,col] = fft3(input[:,col], S, 1)
+    else:
+        for col in range(np.size(input, 1)):
+            full = np.zeros((pS, 1), dtype = "complex_")
+            full[active] = input[:,col]
+            out[:,col] = fft3(full[:,col], S, 1)
+    
+    return out
+
+
+# In[94]:
+
+
+def cIdag(inp):
+    if inp.ndim == 1:
+        input = np.reshape(inp, (inp.size, 1))
+        cols = 1
+    else:
+        input = inp
+        cols = np.size(input, 1)
+
+    out = np.zeros((active[0].size, cols), dtype = "complex_")
+
+    for col in range(cols):
+        full = fft3(input[:,col], S, -1)        
+        out[:,col] = np.reshape(full,(full.size, 1))[active]
+    
+    return out
+
+
+# In[95]:
+
+
+old_settings = np.seterr(divide='ignore', invalid='ignore')
+Vps=-4.*m.pi*Z/G2
+Vps[0]=0.
+np.seterr(**old_settings)
+
+Vps = np.reshape(Vps, (Vps.size, 1))
+Vdual = cJdag(Vps * Sf)
+
+Ns = 1
+
+np.random.seed(100)
+
+W = np.random.randn(active[0].size,Ns) + 1j * np.random.randn(active[0].size,Ns)
+W = orthogonalize(W)
+
+W, Elist = sd(W, 25)
+W = orthogonalize(W)
+
+W, Elist = pccg(W,25,1)
+
+Psi, epsilon = getPsi(W)
+
+for i in range(Ns):
+    print('State:', i, 'Energy:', epsilon[i])
+    
+print('\nTotal energy:', getE(W) + Ewald, "NIST value: -0.445671")
+
+
+# #### Full benefit from minimal representation:
+
+# In[96]:
+
+
+def getn(Psi, f):
+    n = np.zeros((np.prod(S), 1))
+    
+    for col in range(np.size(Psi, axis = 1)):
+        IPsi = cI(Psi[:,col])
+        n[:,0] += np.reshape(f * np.real(IPsi.conjugate() * IPsi), n.size, order='F')
+        
+    return n
+
+
+# In[97]:
+
+
+def getE(W):
+    W = orthogonalize(W)
+    n = getn(W, f)
+    
+    PhiExc = 0.5 * PoissonSolve(n) + cJ(excVWN(n))
+    
+    E = np.real(-f * 0.5 * np.sum(diagouter(L(W), W)) + Vdual.transpose().conjugate() @ n + n.transpose() @ cJdag(O(PhiExc)))
+    
+    return E[0, 0]
+
+
+# In[98]:
+
+
+def H(W):    
+    W = orthogonalize(W)
+    n = getn(W, f)    
+
+    exc = excVWN(n)
+    excp = excpVWN(n)
+    
+    Veff = Vdual + cJdag(O(PoissonSolve(n) + cJ(exc))) + np.reshape(excp, (excp.size, 1)) * cJdag(O(cJ(n)))
+    
+    out = -0.5 * L(W);
+    
+    for col in range(np.size(W, axis = 1)):
+        out[:, col] += np.reshape(cIdag(Veff * cI(W[:,col])), np.size(out, axis = 0))        
+        
+    return  out
+
+
+# In[99]:
+
+
+np.random.seed(100)
+
+W = np.random.randn(active[0].size,Ns) + 1j * np.random.randn(active[0].size,Ns)
+W = orthogonalize(W)
+
+W, Elist = sd(W, 25)
+W = orthogonalize(W)
+
+W, Elist = pccg(W,25,1)
+
+Psi, epsilon = getPsi(W)
+
+for i in range(Ns):
+    print('State:', i, 'Energy:', epsilon[i])
+    
+print('\nTotal energy:', getE(W) + Ewald, "NIST value: -0.445671")
+
+
+# #### Calculation of solid Ge
+
+# In[100]:
+
+
+a=5.66/0.52917721
+R=a * np.diag(np.ones(3))
+
+S = np.array([48, 48, 48])
+ms = np.arange(np.prod(S))
+m1 = np.remainder(ms, S[0])
+m2 = np.remainder(np.floor_divide(ms, S[0]), S[1])
+m3 = np.remainder(np.floor_divide(ms, S[0] * S[1]), S[2])
+M = np.asarray([m1, m2, m3]).transpose()
+
+n1 = np.array([x - (x > S[0]/2) * S[0] for x in m1])
+n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
+n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
+N = np.asarray([n1, n2, n3]).transpose()
+
+r = M @ splalg.inv(np.diag(S)) @ np.transpose(R)
+G = 2. * m.pi * N @ splalg.inv(R)
+G2 = np.sum(G * G, axis=1)
+G2 = np.reshape(G2, (G2.size, 1))
+
+cellCenter = np.reshape(np.sum(R, axis = 1) / 2, (1, 3))
+
+vecsFromCenter = r - np.ones((np.prod(S), 1)) * cellCenter
+dr2 = np.sum(vecsFromCenter * vecsFromCenter, 1)
+dr = np.sqrt(dr2)
+
+Z = 4
+f = 2
+
+X = a * np.asarray([[0, 0, 0], [0.25, 0.25, 0.25], [0.00, 0.50, 0.50], [0.25, 0.75, 0.75], [0.50, 0.00, 0.50], [0.75, 0.25, 0.75], [0.50, 0.50, 0.00], [0.75, 0.75, 0.25]])
+
+Sf = np.sum(np.exp(-1j * G @ X.transpose()), axis = 1)
+Sf = np.reshape(Sf, (Sf.size, 1))
+
+Sfc = np.sum(np.exp(-1j * G @ cellCenter.transpose()), axis = 1)
+Sfc = np.reshape(Sfc, (Sfc.size, 1))
+
+Sfa = np.sum(np.exp(-1j * G @ (X - cellCenter).transpose()), axis = 1)
+Sfa = np.reshape(Sfa, (Sfa.size, 1))
+
+
+sigma1 = 0.25
+g1 = Z * Gaussian(dr, sigma1)
+
+n = cI(cJ(g1) * Sf)
+n = np.real(n)
+
+phi = Poisson(n)
+
+Uself = Z*Z/(2.*m.sqrt(m.pi))*(1./sigma1)*np.size(X,0)
+
+Unum = 0.5 * np.real(cJ(phi).transpose().conjugate() @ O(cJ(n)))
+Ewald = (Unum - Uself)[0,0]
+print('Ewald energy:', Ewald)
+print('Unum:', Unum[0,0])
+print('Uself:', Uself)
+
+
+# In[101]:
+
+
+eS = np.reshape(S / 2. + 0.5, (S.size, 1))
+edges = np.nonzero(np.any(np.abs(M - np.ones((np.size(M, axis = 0), 1)) @ eS.transpose()) < 1, axis = 1))
+G2mx = np.min(G2[edges])
+active = np.nonzero(G2 < G2mx / 4.)
+G2c = np.reshape(G2[active], (active[0].size, 1))
+print("Compression:", G2.size / G2c.size, "Theoretical:", 1./(4.*m.pi*(1./4.)**3./3.))
+
+
+# In[102]:
+
+
+def PseudoGe(pos):
+    rc = 1.052
+    lam = 18.5
+
+    if pos < 1E-10:
+        P = 0
+    else:
+        P = - Z/pos * (1. - m.exp(-lam * pos)) / (1 + m.exp(-lam * (pos - rc))); 
+        
+    return P 
+
+
+# In[103]:
+
+
+sz = np.size(r,axis = 0)
+V = np.zeros((sz, 1))
+for p in range(sz):
+    rd = r[p] - cellCenter
+    dist = m.sqrt(np.sum(rd**2, axis = 1))
+    V[p] += PseudoGe(dist)
+    
+Vps = cJ(V)
+Vps[0] = 0
+
+Sft = Sfc * Sf
+Vdual = cJdag(O(Vps) * Sft)
+
+
+# In[104]:
+
+
+dat = np.reshape(np.real(Vdual), S, order='F')
+
+fig=plt.figure(figsize=(35, 25))
+
+x = np.arange(0, S[1])
+y = np.arange(0, S[2])
+xs, ys = np.meshgrid(x, y, indexing='ij')
+
+toplot = dat[0,:,:]
+        
+ax = fig.add_subplot(1, 1, 1, projection='3d')
+ax.plot_surface(xs, ys, toplot, cmap='viridis', edgecolor='none')
+ax.title.set_text('Real Space')
+plt.tight_layout
+plt.show()
+
+
+# In[105]:
+
+
+Ns = 16
+
+np.random.seed(100)
+
+W = np.random.randn(active[0].size,Ns) + 1j * np.random.randn(active[0].size,Ns)
+W = orthogonalize(W)
+
+W, Elist = sd(W, 150)
+W = orthogonalize(W)
+
+W, Elist = pccg(W,100,1)
+
+Psi, epsilon = getPsi(W)
+
+
+# In[106]:
+
+
+W = orthogonalize(W)
+n = getn(W, f)
+img = np.reshape(n,S)
+img = img[0]
+fig = plt.figure(figsize=(8,6))
+plt.pcolormesh(img)
+plt.show()
+
+
+# In[107]:
+
+
+n = np.reshape(n,S)
+img=np.zeros((S[0],S[1]))
+
+for ind in M:
+    if ind[1] == ind[2]:
+        img[S[0] - ind[0] - 1, ind[1]] = n[ind[0], ind[1], ind[1]]
+
+fig = plt.figure(figsize=(8,6))
+plt.pcolormesh(img,cmap="plasma")
+plt.show()
 

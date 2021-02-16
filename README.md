@@ -19,7 +19,7 @@ I also added some info on the blog: https://compphys.go.ro/car-parrinello-quantu
 
 The [DFT notebook](dft.ipynb)
 It's work in progress, hopefully it will cover the assignments of Thomas Arias lectures.
-For now, you'll find in there only the first, second and the third assignment. The fourth will follow, then maybe I'll add some more comments.
+For now, you'll find in there all assignments, except the last part from the last one, which requires variable fillings and computing the isolated Ge atom. It's not a big deal, hopefully I'll add it soon along with some comments.
 
 ### Python scripts
 
