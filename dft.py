@@ -38,21 +38,27 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 # In[2]:
 
 
-S = np.array([32, 32, 32])
-ms = np.arange(np.prod(S))
-m1 = np.remainder(ms, S[0])
-m2 = np.remainder(np.floor_divide(ms, S[0]), S[1])
-m3 = np.remainder(np.floor_divide(ms, S[0] * S[1]), S[2])
-M = np.asarray([m1, m2, m3]).transpose()
+def CreateIndices(S):
+    ms = np.arange(np.prod(S))
+    m1 = np.remainder(ms, S[0])
+    m2 = np.remainder(np.floor_divide(ms, S[0]), S[1])
+    m3 = np.remainder(np.floor_divide(ms, S[0] * S[1]), S[2])
+    M = np.asarray([m1, m2, m3]).transpose()    
+    
+    n1 = np.array([x - (x > S[0]/2) * S[0] for x in m1])
+    n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
+    n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
+    N = np.asarray([n1, n2, n3]).transpose()
+    
+    return M, N
 
 
 # In[3]:
 
 
-n1 = np.array([x - (x > S[0]/2) * S[0] for x in m1])
-n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
-n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
-N = np.asarray([n1, n2, n3]).transpose()
+S = np.array([32, 32, 32])
+
+M, N = CreateIndices(S)
 
 
 # In[4]:
@@ -301,7 +307,7 @@ Plot(np.real(phi))
 # In[32]:
 
 
-Unum = 0.5 * np.real(cJ(phi).transpose().conjugate() @ O(cJ(n)))
+Unum = 0.5 * np.real(cJ(phi).transpose().conjugate() @ O(cJ(n)))[0]
 print('Ewald energy:', Unum - Uself)
 print('Unum:', Unum)
 print('Uself:', Uself)
@@ -315,16 +321,7 @@ print('Uself:', Uself)
 
 
 S = np.array([20, 25, 30])
-ms = np.arange(np.prod(S))
-m1 = np.remainder(ms, S[0])
-m2 = np.remainder(np.floor_divide(ms, S[0]), S[1])
-m3 = np.remainder(np.floor_divide(ms, S[0] * S[1]), S[2])
-M = np.asarray([m1, m2, m3]).transpose()
-
-n1 = np.array([x - (x > S[0]/2) * S[0] for x in m1])
-n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
-n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
-N = np.asarray([n1, n2, n3]).transpose()
+M, N = CreateIndices(S)
 
 r = M @ splalg.inv(np.diag(S)) @ np.transpose(R)
 G = 2. * m.pi * N @ splalg.inv(R)
@@ -761,16 +758,7 @@ for i in range(4):
 R=np.diag([16, 16, 16])
 
 S = np.array([64, 64, 64])
-ms = np.arange(np.prod(S))
-m1 = np.remainder(ms, S[0])
-m2 = np.remainder(np.floor_divide(ms, S[0]), S[1])
-m3 = np.remainder(np.floor_divide(ms, S[0] * S[1]), S[2])
-M = np.asarray([m1, m2, m3]).transpose()
-
-n1 = np.array([x - (x > S[0]/2) * S[0] for x in m1])
-n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
-n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
-N = np.asarray([n1, n2, n3]).transpose()
+M, N = CreateIndices(S)
 
 r = M @ splalg.inv(np.diag(S)) @ np.transpose(R)
 G = 2. * m.pi * N @ splalg.inv(R)
@@ -795,18 +783,22 @@ Vdual=cJdag(O(cJ(V)))
 # In[70]:
 
 
-def sd(Win, Nit):
+def sd(Win, Nit, fillE = True):
     alfa = 0.00003
     
     W = Win
     
-    Elist = np.zeros(Nit)
+    if fillE:
+        Elist = np.zeros(Nit)
+    else:
+        Elist = None
     
     for i in range(Nit):
         W = W - alfa * getgrad(W)
-        E = getE(W)
-        Elist[i] = E
-        print("Niter:", i, "E:", E)
+        if fillE:
+            E = getE(W)
+            Elist[i] = E
+            print("Niter:", i, "E:", E)
     
     return W, Elist
 
@@ -840,11 +832,15 @@ def Dot(a, b):
 # In[74]:
 
 
-def lm(Win, Nit):
+def lm(Win, Nit, fillE = True):
     alphat = 0.00003
     
     W = Win
-    Elist = np.zeros(Nit)
+    
+    if fillE:
+        Elist = np.zeros(Nit)
+    else:
+        Elist = None
     
     for i in range(Nit):
         g = getgrad(W)
@@ -864,8 +860,10 @@ def lm(Win, Nit):
     
         W = W + alpha * d
     
-        Elist[i] = getE(W)
-        print("Niter:", i, "E:", Elist[i])
+        if fillE:
+            E = getE(W)
+            Elist[i] = E
+            print("Niter:", i, "E:", E)
     
     return W, Elist
 
@@ -888,15 +886,18 @@ def K(input):
 # In[77]:
 
 
-def pclm(Win, Nit):
+def pclm(Win, Nit, fillE = True):
     alphat = 0.00003
     
     W = Win
-    Elist = np.zeros(Nit)
-    
+    if fillE:
+        Elist = np.zeros(Nit)
+    else:
+        Elist = None
+        
     for i in range(Nit):
         g = getgrad(W)
-        if i > 0:
+        if i > 0 and fillE:
             anglecos = Dot(g, d) / m.sqrt(Dot(g,g) * Dot(d,d))
             print("Anglecos:", anglecos)
         
@@ -912,8 +913,10 @@ def pclm(Win, Nit):
     
         W = W + alpha * d
     
-        Elist[i] = getE(W)
-        print("Niter:", i, "E:", Elist[i])
+        if fillE:
+            E = getE(W)
+            Elist[i] = E
+            print("Niter:", i, "E:", E)
     
     return W, Elist
 
@@ -927,20 +930,24 @@ Wpclm, Epclm = pclm(W, 120)
 # In[79]:
 
 
-def pccg(Win, Nit, cgform):
+def pccg(Win, Nit, cgform, fillE = True):
     alphat = 0.00003
     
     W = Win
-    Elist = np.zeros(Nit)
-    
+    if fillE:
+        Elist = np.zeros(Nit)
+    else:
+        Elist = None
+        
     for i in range(Nit):
         g = getgrad(W)
         theK = K(g)
         
         if i > 0:
-            anglecos = Dot(g, d) / m.sqrt(Dot(g,g) * Dot(d,d))
-            cgtest = Dot(g, oldK) / m.sqrt(Dot(g, theK) * Dot(oldg, oldK)) 
-            print("Anglecos:", anglecos, "cgtest:", cgtest)
+            if fillE:
+                anglecos = Dot(g, d) / m.sqrt(Dot(g,g) * Dot(d,d))
+                cgtest = Dot(g, oldK) / m.sqrt(Dot(g, theK) * Dot(oldg, oldK)) 
+                print("Anglecos:", anglecos, "cgtest:", cgtest)
         
             if cgform == 1: # Fletcher-Reeves
                 beta = Dot(g, theK) / Dot(oldg, oldK)
@@ -968,8 +975,10 @@ def pccg(Win, Nit, cgform):
     
         W = W + alpha * d
     
-        Elist[i] = getE(W)
-        print("Niter:", i, "E:", Elist[i])
+        if fillE:
+            E = getE(W)
+            Elist[i] = E
+            print("Niter:", i, "E:", E)
     
     return W, Elist
 
@@ -1013,7 +1022,7 @@ plt.show()
 
 W=Wcg1
 W=orthogonalize(W)
-W, E = pccg(W,50,3)
+W, E = pccg(W,50,3, False)
 
 Psi, epsilon = getPsi(W)
 
@@ -1034,16 +1043,7 @@ for i in range(Ns):
 R=np.diag([16, 16, 16])
 
 S = np.array([64, 64, 64])
-ms = np.arange(np.prod(S))
-m1 = np.remainder(ms, S[0])
-m2 = np.remainder(np.floor_divide(ms, S[0]), S[1])
-m3 = np.remainder(np.floor_divide(ms, S[0] * S[1]), S[2])
-M = np.asarray([m1, m2, m3]).transpose()
-
-n1 = np.array([x - (x > S[0]/2) * S[0] for x in m1])
-n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
-n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
-N = np.asarray([n1, n2, n3]).transpose()
+M, N = CreateIndices(S)
 
 r = M @ splalg.inv(np.diag(S)) @ np.transpose(R)
 G = 2. * m.pi * N @ splalg.inv(R)
@@ -1099,10 +1099,10 @@ np.random.seed(100)
 W = np.random.randn(np.prod(S),Ns) + 1j * np.random.randn(np.prod(S),Ns)
 W = orthogonalize(W)
 
-W, Elist = sd(W, 25)
+W, Elist = sd(W, 25, False)
 W = orthogonalize(W)
 
-W, Elist = pccg(W,25,1)
+W, Elist = pccg(W,25,1, False)
 
 Psi, epsilon = getPsi(W)
 
@@ -1158,10 +1158,10 @@ np.random.seed(100)
 W = np.random.randn(np.prod(S),Ns) + 1j * np.random.randn(np.prod(S),Ns)
 W = orthogonalize(W)
 
-W, Elist = sd(W, 25)
+W, Elist = sd(W, 25, False)
 W = orthogonalize(W)
 
-W, Elist = pccg(W,25,1)
+W, Elist = pccg(W,25,1, False)
 
 Psi, epsilon = getPsi(W)
 
@@ -1181,16 +1181,7 @@ print('\nTotal energy:', getE(W) + Ewald, "Expected: -1.136")
 R=np.diag([16, 16, 16])
 
 S = np.array([64, 64, 64])
-ms = np.arange(np.prod(S))
-m1 = np.remainder(ms, S[0])
-m2 = np.remainder(np.floor_divide(ms, S[0]), S[1])
-m3 = np.remainder(np.floor_divide(ms, S[0] * S[1]), S[2])
-M = np.asarray([m1, m2, m3]).transpose()
-
-n1 = np.array([x - (x > S[0]/2) * S[0] for x in m1])
-n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
-n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
-N = np.asarray([n1, n2, n3]).transpose()
+M, N = CreateIndices(S)
 
 r = M @ splalg.inv(np.diag(S)) @ np.transpose(R)
 G = 2. * m.pi * N @ splalg.inv(R)
@@ -1326,10 +1317,10 @@ np.random.seed(100)
 W = np.random.randn(active[0].size,Ns) + 1j * np.random.randn(active[0].size,Ns)
 W = orthogonalize(W)
 
-W, Elist = sd(W, 25)
+W, Elist = sd(W, 25, False)
 W = orthogonalize(W)
 
-W, Elist = pccg(W,25,1)
+W, Elist = pccg(W,25,1, False)
 
 Psi, epsilon = getPsi(W)
 
@@ -1359,13 +1350,13 @@ def getn(Psi, f):
 
 def getE(W):
     W = orthogonalize(W)
+
     n = getn(W, f)
-    
     PhiExc = 0.5 * PoissonSolve(n) + cJ(excVWN(n))
     
-    E = np.real(-f * 0.5 * np.sum(diagouter(L(W), W)) + Vdual.transpose().conjugate() @ n + n.transpose() @ cJdag(O(PhiExc)))
+    E = -f * 0.5 * np.sum(diagouter(L(W), W)) + Vdual.transpose().conjugate() @ n + n.transpose() @ cJdag(O(PhiExc))
     
-    return E[0, 0]
+    return np.real(E[0, 0])
 
 
 # In[98]:
@@ -1396,10 +1387,10 @@ np.random.seed(100)
 W = np.random.randn(active[0].size,Ns) + 1j * np.random.randn(active[0].size,Ns)
 W = orthogonalize(W)
 
-W, Elist = sd(W, 25)
+W, Elist = sd(W, 25, False)
 W = orthogonalize(W)
 
-W, Elist = pccg(W,25,1)
+W, Elist = pccg(W,25,1, False)
 
 Psi, epsilon = getPsi(W)
 
@@ -1418,16 +1409,7 @@ a=5.66/0.52917721
 R=a * np.diag(np.ones(3))
 
 S = np.array([48, 48, 48])
-ms = np.arange(np.prod(S))
-m1 = np.remainder(ms, S[0])
-m2 = np.remainder(np.floor_divide(ms, S[0]), S[1])
-m3 = np.remainder(np.floor_divide(ms, S[0] * S[1]), S[2])
-M = np.asarray([m1, m2, m3]).transpose()
-
-n1 = np.array([x - (x > S[0]/2) * S[0] for x in m1])
-n2 = np.array([x - (x > S[1]/2) * S[1] for x in m2])
-n3 = np.array([x - (x > S[2]/2) * S[2] for x in m3])
-N = np.asarray([n1, n2, n3]).transpose()
+M, N = CreateIndices(S)
 
 r = M @ splalg.inv(np.diag(S)) @ np.transpose(R)
 G = 2. * m.pi * N @ splalg.inv(R)
@@ -1445,15 +1427,9 @@ f = 2
 
 X = a * np.asarray([[0, 0, 0], [0.25, 0.25, 0.25], [0.00, 0.50, 0.50], [0.25, 0.75, 0.75], [0.50, 0.00, 0.50], [0.75, 0.25, 0.75], [0.50, 0.50, 0.00], [0.75, 0.75, 0.25]])
 
+#Sf = np.sum(np.exp(-1j * G @ (X - cellCenter).transpose()), axis = 1)
 Sf = np.sum(np.exp(-1j * G @ X.transpose()), axis = 1)
 Sf = np.reshape(Sf, (Sf.size, 1))
-
-Sfc = np.sum(np.exp(-1j * G @ cellCenter.transpose()), axis = 1)
-Sfc = np.reshape(Sfc, (Sfc.size, 1))
-
-Sfa = np.sum(np.exp(-1j * G @ (X - cellCenter).transpose()), axis = 1)
-Sfa = np.reshape(Sfa, (Sfa.size, 1))
-
 
 sigma1 = 0.25
 g1 = Z * Gaussian(dr, sigma1)
@@ -1493,32 +1469,52 @@ def PseudoGe(pos):
     if pos < 1E-10:
         P = 0
     else:
-        P = - Z/pos * (1. - m.exp(-lam * pos)) / (1 + m.exp(-lam * (pos - rc))); 
+        P = - Z/pos * (1. - m.exp(-lam * pos)) / (1 + m.exp(-lam * (pos - rc)));
         
-    return P 
+    return P
 
 
 # In[103]:
 
 
-sz = np.size(r,axis = 0)
-V = np.zeros((sz, 1))
-for p in range(sz):
-    rd = r[p] - cellCenter
-    dist = m.sqrt(np.sum(rd**2, axis = 1))
-    V[p] += PseudoGe(dist)
+#sz = np.size(r,axis = 0)
+#V = np.zeros((sz, 1))
+#for p in range(sz):
+#    rd = r[p] - cellCenter
+#    dist = m.sqrt(np.sum(rd**2, axis = 1))
+#    V[p] += PseudoGe(dist)
     
-Vps = cJ(V)
-Vps[0] = 0
+#Vps = cJ(V)
+#Vps[0] = 0
 
-Sft = Sfc * Sf
-Vdual = cJdag(O(Vps) * Sft)
+#Vdual = cJdag(O(Vps) * Sf)
+
+# pseudopotential in fourier space taken from Arias assignment and translated to python from matlab code
+# using the above pseudopotential gives the values 'wrong' (although the zero of energy does not matter, but I'll let this here to be comparable with values given in assignment)
+lam=18.5
+rc=1.052
+Gm = np.sqrt(G2)
+
+old_settings = np.seterr(divide='ignore', invalid='ignore')
+
+Vps = -2. * m.pi * np.exp(-m.pi * Gm/lam) * np.cos(Gm * rc) * (Gm / lam) / (1. - np.exp(-2.*m.pi*Gm/lam))
+for i in range(4):
+    Vps += (-1)**i * np.exp(-lam * rc * i)/(1. + (i*lam/Gm)**2)
+    
+Vps = Vps * 4. * m.pi * Z / Gm**2 * (1.+ np.exp(-lam*rc)) - 4. * m.pi * Z/ Gm**2
+np.seterr(**old_settings)
+
+i = np.asarray([i for i in range(1, 5)])
+Vps[0] = 4. * m.pi * Z * (1. + np.exp(-lam * rc))*(rc**2/2. + 1./lam**2 * (m.pi**2/6. + np.sum((-1)**i * np.exp(-lam*rc*i)/ i**2)))
+
+Vps = np.reshape(Vps, (Vps.size,1))
+Vdual = cJ(Vps * Sf)
 
 
 # In[104]:
 
 
-dat = np.reshape(np.real(Vdual), S, order='F')
+dat = np.reshape(np.real(Vdual), S)
 
 fig=plt.figure(figsize=(35, 25))
 
@@ -1538,22 +1534,38 @@ plt.show()
 # In[105]:
 
 
-Ns = 16
+Ns = 16 # 8 atoms, Z = 4, 2 electrons / state
 
 np.random.seed(100)
 
 W = np.random.randn(active[0].size,Ns) + 1j * np.random.randn(active[0].size,Ns)
 W = orthogonalize(W)
 
-W, Elist = sd(W, 150)
+W, Elist = sd(W, 150, False)
 W = orthogonalize(W)
 
-W, Elist = pccg(W,100,1)
-
-Psi, epsilon = getPsi(W)
+W, Elist = pccg(W,100,1, False)
 
 
 # In[106]:
+
+
+Psi, epsilon = getPsi(W)
+E = getE(W)
+
+for i in range(Ns):
+    print('State:', i, 'Energy:', epsilon[i])
+
+Etot = E + Ewald
+print('\nTotal energy:', Etot)
+print('Electronic energy:', E)
+print('Energy/atom:', Etot / 8)
+CE = abs(Etot / 8 + 3.7301)
+CEeV = CE * 27.21138
+print('Cohesive Energy:', CE, 'Hartree, eV:', CEeV, 'Experiment: 3.85', 'error:', abs(CEeV - 3.85) / 3.85 * 100.,'%')
+
+
+# In[107]:
 
 
 W = orthogonalize(W)
@@ -1565,7 +1577,7 @@ plt.pcolormesh(img)
 plt.show()
 
 
-# In[107]:
+# In[108]:
 
 
 n = np.reshape(n,S)
