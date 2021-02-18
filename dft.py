@@ -1340,7 +1340,7 @@ def getn(Psi, f):
     
     for col in range(np.size(Psi, axis = 1)):
         IPsi = cI(Psi[:,col])
-        n[:,0] += np.reshape(f * np.real(IPsi.conjugate() * IPsi), n.size, order='F')
+        n[:,0] += np.reshape(f * np.real(IPsi.conjugate() * IPsi), n.size)
         
     return n
 
@@ -1573,6 +1573,7 @@ n = getn(W, f)
 img = np.reshape(n,S)
 img = img[0]
 fig = plt.figure(figsize=(8,6))
+fig.suptitle('100', fontsize=22)
 plt.pcolormesh(img)
 plt.show()
 
@@ -1580,14 +1581,13 @@ plt.show()
 # In[108]:
 
 
-n = np.reshape(n,S)
-img=np.zeros((S[0],S[1]))
-
-for ind in M:
-    if ind[1] == ind[2]:
-        img[S[0] - ind[0] - 1, ind[1]] = n[ind[0], ind[1], ind[1]]
-
+img = n[np.nonzero(M[:,1] == M[:,2])]
+# In the assignments, ppm function is given. That saves the matrix into a ppm file, but the structure of ppm is starting with the top of the image
+# so it comes up flipped. This is done here to be the same as in ppm image displayed in the lecture and that can be obtained by doing the assignments in matlab/octave/scilab
+img = np.flipud(np.reshape(img, (S[0],S[1]), order = 'F')) 
+            
 fig = plt.figure(figsize=(8,6))
+fig.suptitle('110', fontsize=22)
 plt.pcolormesh(img,cmap="plasma")
 plt.show()
 
