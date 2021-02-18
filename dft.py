@@ -1591,3 +1591,171 @@ fig.suptitle('110', fontsize=22)
 plt.pcolormesh(img,cmap="plasma")
 plt.show()
 
+
+# #### Variable fillings and verification of the pseudopotential
+
+# In[109]:
+
+
+def getn(Psi, f):
+    prodS = np.prod(S)
+    n = np.zeros((prodS, 1))
+    
+    for col in range(np.size(Psi, axis = 1)):
+        IPsi = cI(Psi[:,col])
+        n[:,0] += np.reshape(f[col, 0] * np.real(IPsi.conjugate() * IPsi), prodS)
+        
+    return n
+
+
+# In[110]:
+
+
+def getE(W):
+    W = orthogonalize(W)
+
+    n = getn(W, f)
+    PhiExc = 0.5 * PoissonSolve(n) + cJ(excVWN(n))
+    
+    E = -0.5 * np.trace(np.diagflat(f) @ (W.transpose().conjugate() @ L(W))) + Vdual.transpose().conjugate() @ n + n.transpose() @ cJdag(O(PhiExc))
+        
+    return np.real(E[0, 0])
+
+
+# In[111]:
+
+
+def Q(inp, U):
+    mu, V = splalg.eig(U)
+    mu = np.reshape(mu, (mu.size,1))
+    
+    denom = np.sqrt(mu) @ np.ones((1, mu.size)) 
+    denom = denom + denom.transpose().conjugate()
+
+    Vadj = V.transpose().conjugate()
+
+    return V @ ((Vadj @ inp @ V) / denom) @ Vadj    
+
+
+# In[112]:
+
+
+def getgrad(W):
+    Wadj = W.transpose().conjugate()
+    OW = O(W)
+    U = Wadj @ OW
+    Uinv = splalg.inv(U)
+    HW = H(W)  
+    Umsqrt = splalg.sqrtm(Uinv)
+    Htilde = Umsqrt @ (Wadj @ HW) @ Umsqrt
+    F = np.diagflat(f)
+    
+    Fconv = (Umsqrt @ F @ Umsqrt)
+    
+    first = (HW - (OW @ Uinv) @ (Wadj @ HW)) @ Fconv
+    second = OW @ (Umsqrt @ Q(Htilde @ F - F @ Htilde, U))
+    
+    return first + second
+
+
+# #### Test the results against the previous results of Ge crystal
+
+# In[113]:
+
+
+f = np.asarray(2 * np.ones((Ns, 1)))
+
+np.random.seed(100)
+
+W = np.random.randn(active[0].size,Ns) + 1j * np.random.randn(active[0].size,Ns)
+W = orthogonalize(W)
+
+W, Elist = sd(W, 150, False)
+W = orthogonalize(W)
+
+W, Elist = pccg(W,100,1, False)
+
+
+# In[114]:
+
+
+Psi, epsilon = getPsi(W)
+E = getE(W)
+
+for i in range(Ns):
+    print('State:', i, 'Energy:', epsilon[i])
+
+Etot = E + Ewald
+print('\nTotal energy:', Etot)
+print('Electronic energy:', E)
+print('Energy/atom:', Etot / 8)
+CE = abs(Etot / 8 + 3.7301)
+CEeV = CE * 27.21138
+print('Cohesive Energy:', CE, 'Hartree, eV:', CEeV, 'Experiment: 3.85', 'error:', abs(CEeV - 3.85) / 3.85 * 100.,'%')
+
+
+# #### Isolated Ge atom
+
+# In[115]:
+
+
+Ns = 4
+f = np.asarray([[2.], [2./3.], [2./3.], [2./3.]])
+
+X = np.asarray([[0, 0, 0]])
+
+Sf = np.sum(np.exp(-1j * G @ X.transpose()), axis = 1)
+Sf = np.reshape(Sf, (Sf.size, 1))
+
+sigma1 = 0.25
+g1 = Z * Gaussian(dr, sigma1)
+
+n = cI(cJ(g1) * Sf)
+n = np.real(n)
+
+phi = Poisson(n)
+
+Uself = Z*Z/(2.*m.sqrt(m.pi))*(1./sigma1)*np.size(X,0)
+
+Unum = 0.5 * np.real(cJ(phi).transpose().conjugate() @ O(cJ(n)))
+Ewald = (Unum - Uself)[0,0]
+print('Ewald energy:', Ewald)
+print('Unum:', Unum[0,0])
+print('Uself:', Uself)
+
+
+# In[116]:
+
+
+Vdual = cJ(Vps * Sf)
+
+
+# In[117]:
+
+
+np.random.seed(100)
+
+#something is not exactly right here
+W = np.random.randn(active[0].size,Ns) + 1j * np.random.randn(active[0].size,Ns)
+W = orthogonalize(W)
+
+W, Elist = sd(W, 50, False)
+W = orthogonalize(W)
+
+W, Elist = pccg(W, 100, 1, False)
+
+
+# In[118]:
+
+
+Psi, epsilon = getPsi(W)
+E = getE(W)
+
+for i in range(Ns):
+    print('State:', i, 'Energy:', epsilon[i])
+
+Etot = E + Ewald
+print('\nTotal energy:', Etot)
+print('Electronic energy:', E)
+print('Energy dif beteen s and p orbitals:', epsilon[1] - epsilon[0], 'Expected (from NIST data): 0.276641')
+

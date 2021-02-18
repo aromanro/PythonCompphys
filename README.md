@@ -18,8 +18,8 @@ I also added some info on the blog: https://compphys.go.ro/car-parrinello-quantu
 ### Density Functional Theory
 
 The [DFT notebook](dft.ipynb)
-It's work in progress, hopefully it will cover the assignments of Thomas Arias lectures.
-For now, you'll find in there all assignments, except the last part from the last one, which requires variable fillings and computing the isolated Ge atom. It's not a big deal, hopefully I'll add it soon along with some comments.
+Covers the assignments of Thomas Arias lectures.
+You should not start it in Binder, as computations can take a long time.
 
 ### Python scripts
 
