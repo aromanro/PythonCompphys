@@ -844,7 +844,7 @@ def lm(Win, Nit, fillE = True):
     
     for i in range(Nit):
         g = getgrad(W)
-        if i > 0:
+        if i > 0 and fillE:
             anglecos = Dot(g, d) / m.sqrt(Dot(g,g) * Dot(d,d))
             print("Anglecos:", anglecos)
         
@@ -930,9 +930,7 @@ Wpclm, Epclm = pclm(W, 120)
 # In[79]:
 
 
-def pccg(Win, Nit, cgform, fillE = True):
-    alphat = 0.00003
-    
+def pccg(Win, Nit, cgform, fillE = True, alphat = 0.00003):
     W = Win
     if fillE:
         Elist = np.zeros(Nit)
@@ -1626,15 +1624,15 @@ def getE(W):
 
 
 def Q(inp, U):
-    mu, V = splalg.eig(U)
+    mu, V = splalg.eig(U, check_finite = True)
     mu = np.reshape(mu, (mu.size,1))
     
     denom = np.sqrt(mu) @ np.ones((1, mu.size)) 
     denom = denom + denom.transpose().conjugate()
-
+    
     Vadj = V.transpose().conjugate()
 
-    return V @ ((Vadj @ inp @ V) / denom) @ Vadj    
+    return V @ ((Vadj @ inp @ V) / denom) @ Vadj
 
 
 # In[112]:
@@ -1647,14 +1645,16 @@ def getgrad(W):
     Uinv = splalg.inv(U)
     HW = H(W)  
     Umsqrt = splalg.sqrtm(Uinv)
-    Htilde = Umsqrt @ (Wadj @ HW) @ Umsqrt
+    WadjHW = Wadj @ HW
+    Htilde = Umsqrt @ WadjHW @ Umsqrt
     F = np.diagflat(f)
     
     Fconv = (Umsqrt @ F @ Umsqrt)
     
-    first = (HW - (OW @ Uinv) @ (Wadj @ HW)) @ Fconv
-    second = OW @ (Umsqrt @ Q(Htilde @ F - F @ Htilde, U))
+    first = (HW - (OW @ Uinv) @ WadjHW) @ Fconv
     
+    second = OW @ (Umsqrt @ Q(Htilde @ F - F @ Htilde, U))
+
     return first + second
 
 
@@ -1739,10 +1739,16 @@ np.random.seed(100)
 W = np.random.randn(active[0].size,Ns) + 1j * np.random.randn(active[0].size,Ns)
 W = orthogonalize(W)
 
-W, Elist = sd(W, 50, False)
+W, Elist = sd(W, 300, False)
 W = orthogonalize(W)
 
-W, Elist = pccg(W, 100, 1, False)
+W, Elist = lm(W, 300, False)
+
+# the preconditioned variants do not work so well here
+W = orthogonalize(W)
+W, Elist = pclm(W, 10, True)
+
+#W, Elist = pccg(W, 10, 1, True, 0.000000001)
 
 
 # In[118]:
@@ -1758,4 +1764,10 @@ Etot = E + Ewald
 print('\nTotal energy:', Etot)
 print('Electronic energy:', E)
 print('Energy dif beteen s and p orbitals:', epsilon[1] - epsilon[0], 'Expected (from NIST data): 0.276641')
+
+
+# In[ ]:
+
+
+
 
