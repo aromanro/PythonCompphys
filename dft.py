@@ -25,14 +25,10 @@
 
 import math as m
 import numpy as np
-#impurt cupy as np
 import scipy as sp
 import scipy.linalg as splalg
-#import skcuda.linalg as splalg
 import matplotlib.pyplot as plt
 get_ipython().run_line_magic('matplotlib', 'inline')
-#import os
-#os.environ['CUDA_VISIBLE_DEVICES'] = '-1' #disable gpu usage
 
 
 # In[2]:
@@ -1097,10 +1093,10 @@ np.random.seed(100)
 W = np.random.randn(np.prod(S),Ns) + 1j * np.random.randn(np.prod(S),Ns)
 W = orthogonalize(W)
 
-W, Elist = sd(W, 25, False)
+W, Elist = sd(W, 30, False)
 W = orthogonalize(W)
 
-W, Elist = pccg(W,25,1, False)
+W, Elist = pccg(W, 30, 1, False)
 
 Psi, epsilon = getPsi(W)
 
@@ -1156,10 +1152,10 @@ np.random.seed(100)
 W = np.random.randn(np.prod(S),Ns) + 1j * np.random.randn(np.prod(S),Ns)
 W = orthogonalize(W)
 
-W, Elist = sd(W, 25, False)
+W, Elist = sd(W, 30, False)
 W = orthogonalize(W)
 
-W, Elist = pccg(W,25,1, False)
+W, Elist = pccg(W, 30, 1, False)
 
 Psi, epsilon = getPsi(W)
 
@@ -1315,10 +1311,10 @@ np.random.seed(100)
 W = np.random.randn(active[0].size,Ns) + 1j * np.random.randn(active[0].size,Ns)
 W = orthogonalize(W)
 
-W, Elist = sd(W, 25, False)
+W, Elist = sd(W, 30, False)
 W = orthogonalize(W)
 
-W, Elist = pccg(W,25,1, False)
+W, Elist = pccg(W, 30, 1, False)
 
 Psi, epsilon = getPsi(W)
 
@@ -1385,10 +1381,10 @@ np.random.seed(100)
 W = np.random.randn(active[0].size,Ns) + 1j * np.random.randn(active[0].size,Ns)
 W = orthogonalize(W)
 
-W, Elist = sd(W, 25, False)
+W, Elist = sd(W, 30, False)
 W = orthogonalize(W)
 
-W, Elist = pccg(W,25,1, False)
+W, Elist = pccg(W, 30, 1, False)
 
 Psi, epsilon = getPsi(W)
 
@@ -1730,28 +1726,27 @@ print('Uself:', Uself)
 Vdual = cJ(Vps * Sf)
 
 
-# In[117]:
+# In[125]:
 
 
 np.random.seed(100)
 
-#something is not exactly right here
 W = np.random.randn(active[0].size,Ns) + 1j * np.random.randn(active[0].size,Ns)
 W = orthogonalize(W)
 
-W, Elist = sd(W, 300, False)
+W, Elist = sd(W, 600, False)
 W = orthogonalize(W)
 
-W, Elist = lm(W, 300, False)
+W, Elist = lm(W, 600, False)
 
 # the preconditioned variants do not work so well here
 W = orthogonalize(W)
 W, Elist = pclm(W, 10, True)
 
-#W, Elist = pccg(W, 10, 1, True, 0.000000001)
+#W, Elist = pccg(W, 10, 1, True)
 
 
-# In[118]:
+# In[126]:
 
 
 Psi, epsilon = getPsi(W)
@@ -1764,10 +1759,4 @@ Etot = E + Ewald
 print('\nTotal energy:', Etot)
 print('Electronic energy:', E)
 print('Energy dif beteen s and p orbitals:', epsilon[1] - epsilon[0], 'Expected (from NIST data): 0.276641')
-
-
-# In[ ]:
-
-
-
 
