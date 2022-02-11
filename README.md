@@ -1,6 +1,8 @@
 # Python Compphys
 Various simple Computational Physics topics handled in Python
 
+[![CodeFactor](https://www.codefactor.io/repository/github/aromanro/pythoncompphys/badge)](https://www.codefactor.io/repository/github/aromanro/pythoncompphys)
+
 Some tutorials on various topics, using python instead of C++, with more comments and on easier things that those from the C++ projects, with very little focus on performance. 
 For example they might contain programs/problems from the Jos Thijjsen's Computational Physics book or something similar.
  
