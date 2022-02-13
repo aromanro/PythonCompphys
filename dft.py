@@ -90,7 +90,7 @@ dr = np.sqrt(np.sum(vecsFromCenter * vecsFromCenter, 1))
 
 def Gaussian(r, sigma = 0.5):
     twosigma2 = 2. * sigma * sigma
-    return np.exp(-r*r/twosigma2) / np.power(np.sqrt(m.pi * twosigma2), 3);    
+    return np.exp(-r*r/twosigma2) / np.power(np.sqrt(m.pi * twosigma2), 3)    
 
 
 # In[9]:
@@ -137,29 +137,29 @@ def fft3(dat, N, s):
 # In[14]:
 
 
-def cI(input):
-    return fft3(input, S, 1)
+def cI(inp):
+    return fft3(inp, S, 1)
 
 
 # In[15]:
 
 
-def cJ(input):
-    return 1. / np.prod(S) * fft3(input, S, -1)
+def cJ(inp):
+    return 1. / np.prod(S) * fft3(inp, S, -1)
 
 
 # In[16]:
 
 
-def O(input):
-    return splalg.det(R) * input
+def O(inp):
+    return splalg.det(R) * inp
 
 
 # In[17]:
 
 
-def L(input):    
-    return -splalg.det(R) * G2 * input
+def L(inp):    
+    return -splalg.det(R) * G2 * inp
 
 
 # In[18]:
@@ -167,12 +167,12 @@ def L(input):
 
 def Linv(inp):
     if inp.ndim == 1:
-        input = np.reshape(inp, (inp.size, 1))
+        vals = np.reshape(inp, (inp.size, 1))
     else:
-        input = inp
+        vals = inp
         
     old_settings = np.seterr(divide='ignore', invalid='ignore')
-    result = -1. / splalg.det(R) * input / np.reshape(G2, input.shape)
+    result = -1. / splalg.det(R) * vals / np.reshape(G2, vals.shape)
     result[0] = 0
     np.seterr(**old_settings)
     return result    
@@ -238,7 +238,7 @@ def Plot(dat):
     ax3 = fig.add_subplot(1, 3, 3, projection='3d')
     ax3.plot_surface(xs, ys, toplot3, cmap='viridis', edgecolor='none')
 
-    plt.tight_layout
+    plt.tight_layout()
     plt.show()
 
 
@@ -334,13 +334,13 @@ dr = np.sqrt(dr2)
 
 def cI(inp):
     if inp.ndim == 1:
-        input = np.reshape(inp, (inp.size, 1))
+        vals = np.reshape(inp, (inp.size, 1))
     else:
-        input = inp
+        vals = inp
         
-    out = np.zeros(input.shape, dtype = "complex_")    
-    for col in range(np.size(input, 1)):
-        out[:,col] = fft3(input[:,col], S, 1)
+    out = np.zeros(vals.shape, dtype = "complex_")    
+    for col in range(np.size(vals, 1)):
+        out[:,col] = fft3(vals[:,col], S, 1)
     
     return out
 
@@ -350,15 +350,15 @@ def cI(inp):
 
 def cJ(inp):
     if inp.ndim == 1:
-        input = np.reshape(inp, (inp.size, 1))
+        vals = np.reshape(inp, (inp.size, 1))
     else:
-        input = inp
+        vals = inp
     
     norm = 1. / np.prod(S)
-    out = np.zeros(input.shape, dtype = "complex_")
+    out = np.zeros(vals.shape, dtype = "complex_")
     
-    for col in range(np.size(input, 1)):
-        out[:,col] = norm * fft3(input[:,col], S, -1)
+    for col in range(np.size(vals, 1)):
+        out[:,col] = norm * fft3(vals[:,col], S, -1)
     
     return out
 
@@ -368,11 +368,11 @@ def cJ(inp):
 
 def L(inp):
     if inp.ndim == 1:
-        input = np.reshape(inp, (inp.size, 1))
+        vals = np.reshape(inp, (inp.size, 1))
     else:
-        input = inp
+        vals = inp
     
-    return -splalg.det(R) * (G2 @ np.ones((1, np.size(input, 1)))) * input
+    return -splalg.det(R) * (G2 @ np.ones((1, np.size(vals, 1)))) * vals
 
 
 # In[37]:
@@ -380,14 +380,14 @@ def L(inp):
 
 def cIdag(inp):
     if inp.ndim == 1:
-        input = np.reshape(inp, (inp.size, 1))
+        vals = np.reshape(inp, (inp.size, 1))
     else:
-        input = inp
+        vals = inp
 
-    out = np.zeros(input.shape, dtype = "complex_")
+    out = np.zeros(vals.shape, dtype = "complex_")
 
-    for col in range(np.size(input, 1)):
-        out[:,col] = fft3(input[:,col], S, -1)
+    for col in range(np.size(vals, 1)):
+        out[:,col] = fft3(vals[:,col], S, -1)
     
     return out
 
@@ -397,15 +397,15 @@ def cIdag(inp):
 
 def cJdag(inp):
     if inp.ndim == 1:
-        input = np.reshape(inp, (inp.size, 1))
+        vals = np.reshape(inp, (inp.size, 1))
     else:
-        input = inp
+        vals = inp
     
     norm = 1. / np.prod(S)
-    out = np.zeros(input.shape, dtype = "complex_")
+    out = np.zeros(vals.shape, dtype = "complex_")
     
-    for col in range(np.size(input, 1)):
-        out[:,col] = norm * fft3(input[:,col], S, 1)
+    for col in range(np.size(vals, 1)):
+        out[:,col] = norm * fft3(vals[:,col], S, 1)
     
     return out
 
@@ -572,7 +572,7 @@ Psi, epsilon = getPsi(W)
 # In[54]:
 
 
-epsilon
+print(epsilon)
 
 
 # In[55]:
@@ -725,7 +725,7 @@ Psi, epsilon = getPsi(W)
 # In[66]:
 
 
-epsilon
+print(epsilon)
 
 
 # In[67]:
@@ -873,8 +873,8 @@ Wlm, Elm = lm(W, 120)
 # In[76]:
 
 
-def K(input):
-    return input / (1. + G2)
+def K(inp):
+    return inp / (1. + G2)
 
 
 # The preconditioned line minimization is the same as the line minimization above, but with the direction changed:
@@ -1229,24 +1229,24 @@ print("Compression:", G2.size / G2c.size, "Theoretical:", 1./(4.*m.pi*(1./4.)**3
 
 def L(inp):
     if inp.ndim == 1:
-        input = np.reshape(inp, (inp.size, 1))
+        out = np.reshape(inp, (inp.size, 1))
     else:
-        input = inp
+        out = inp
     
-    if np.size(input, 0) == G2c.size:
-        return -splalg.det(R) * (G2c @ np.ones((1, np.size(input, 1)))) * input        
+    if np.size(out, 0) == G2c.size:
+        return -splalg.det(R) * (G2c @ np.ones((1, np.size(out, 1)))) * out        
     
-    return -splalg.det(R) * (G2 @ np.ones((1, np.size(input, 1)))) * input
+    return -splalg.det(R) * (G2 @ np.ones((1, np.size(out, 1)))) * out
 
 
 # In[92]:
 
 
-def K(input):
-    if np.size(input, 0) == G2c.size:
-        return input / (1. + G2c)
+def K(inp):
+    if np.size(inp, 0) == G2c.size:
+        return inp / (1. + G2c)
     
-    return input / (1. + G2)
+    return inp / (1. + G2)
 
 
 # In[93]:
@@ -1254,20 +1254,20 @@ def K(input):
 
 def cI(inp):
     if inp.ndim == 1:
-        input = np.reshape(inp, (inp.size, 1))
+        vals = np.reshape(inp, (inp.size, 1))
     else:
-        input = inp
+        vals = inp
     
     pS = np.prod(S)
-    out = np.zeros((pS, np.size(input, axis = 1)), dtype = "complex_")
+    out = np.zeros((pS, np.size(vals, axis = 1)), dtype = "complex_")
     
-    if np.size(input, 0) == pS:
-        for col in range(np.size(input, 1)):
-            out[:,col] = fft3(input[:,col], S, 1)
+    if np.size(vals, 0) == pS:
+        for col in range(np.size(vals, 1)):
+            out[:,col] = fft3(out[:,col], S, 1)
     else:
-        for col in range(np.size(input, 1)):
+        for col in range(np.size(vals, 1)):
             full = np.zeros((pS, 1), dtype = "complex_")
-            full[active] = input[:,col]
+            full[active] = vals[:,col]
             out[:,col] = fft3(full[:,col], S, 1)
     
     return out
@@ -1278,16 +1278,16 @@ def cI(inp):
 
 def cIdag(inp):
     if inp.ndim == 1:
-        input = np.reshape(inp, (inp.size, 1))
+        vals = np.reshape(inp, (inp.size, 1))
         cols = 1
     else:
-        input = inp
-        cols = np.size(input, 1)
+        vals = inp
+        cols = np.size(vals, 1)
 
     out = np.zeros((active[0].size, cols), dtype = "complex_")
 
     for col in range(cols):
-        full = fft3(input[:,col], S, -1)        
+        full = fft3(vals[:,col], S, -1)        
         out[:,col] = np.reshape(full,(full.size, 1))[active]
     
     return out
@@ -1365,7 +1365,7 @@ def H(W):
     
     Veff = Vdual + cJdag(O(PoissonSolve(n) + cJ(exc))) + np.reshape(excp, (excp.size, 1)) * cJdag(O(cJ(n)))
     
-    out = -0.5 * L(W);
+    out = -0.5 * L(W)
     
     for col in range(np.size(W, axis = 1)):
         out[:, col] += np.reshape(cIdag(Veff * cI(W[:,col])), np.size(out, axis = 0))        
@@ -1463,7 +1463,7 @@ def PseudoGe(pos):
     if pos < 1E-10:
         P = 0
     else:
-        P = - Z/pos * (1. - m.exp(-lam * pos)) / (1 + m.exp(-lam * (pos - rc)));
+        P = - Z/pos * (1. - m.exp(-lam * pos)) / (1 + m.exp(-lam * (pos - rc)))
         
     return P
 
@@ -1521,7 +1521,7 @@ toplot = dat[0,:,:]
 ax = fig.add_subplot(1, 1, 1, projection='3d')
 ax.plot_surface(xs, ys, toplot, cmap='viridis', edgecolor='none')
 ax.title.set_text('Real Space')
-plt.tight_layout
+plt.tight_layout()
 plt.show()
 
 
@@ -1538,7 +1538,7 @@ W = orthogonalize(W)
 W, Elist = sd(W, 150, False)
 W = orthogonalize(W)
 
-W, Elist = pccg(W,100,1, False)
+W, Elist = pccg(W, 100, 1, False)
 
 
 # In[106]:
@@ -1726,7 +1726,7 @@ print('Uself:', Uself)
 Vdual = cJ(Vps * Sf)
 
 
-# In[125]:
+# In[117]:
 
 
 np.random.seed(100)
@@ -1746,7 +1746,7 @@ W, Elist = pclm(W, 10, True)
 #W, Elist = pccg(W, 10, 1, True)
 
 
-# In[126]:
+# In[118]:
 
 
 Psi, epsilon = getPsi(W)
@@ -1759,4 +1759,3 @@ Etot = E + Ewald
 print('\nTotal energy:', Etot)
 print('Electronic energy:', E)
 print('Energy dif beteen s and p orbitals:', epsilon[1] - epsilon[0], 'Expected (from NIST data): 0.276641')
-

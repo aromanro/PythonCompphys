@@ -650,4 +650,3 @@ plt.show()
 
 
 print(X) # the experimental value given in the book is 1.401, the equilibrium with Hartree-Fock using only s-type orbitals is 1.3881
-

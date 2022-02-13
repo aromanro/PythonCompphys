@@ -527,10 +527,3 @@ print(Eg + 1) # +1 for nuclear repulsion energy
 
 
 print(C)
-
-
-# In[ ]:
-
-
-
-
