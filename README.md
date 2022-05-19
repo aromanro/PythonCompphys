@@ -12,9 +12,12 @@ Some of them will be described on https://compphys.go.ro, some of them only here
 
 The [Hartree-Fock notebook](hartree-fock.ipynb) is for paragraphs and problems from Chapter 3 in [Computational Physics, by Jos Thijssen](https://www.cambridge.org/core/books/computational-physics/BEE73B0139D4A9993193B57CDC62096E#fndtn-information). See the notebook for details.
 
+View it here if it's too big to show on GitHub: [Hartree-Fock notebook](https://nbviewer.org/github/aromanro/PythonCompphys/blob/master/hartree-fock.ipynb).
+
 ### Car-Parrinello
 
 The [Car-Parrinello notebook](Car-Parrinello.ipynb) is for the Chapter 9 in [Computational Physics, by Jos Thijssen](https://www.cambridge.org/core/books/computational-physics/BEE73B0139D4A9993193B57CDC62096E#fndtn-information). See the notebook for details.
+View it here if it's too big to show on GitHub: [Car-Parrinello notebook](https://nbviewer.org/github/aromanro/PythonCompphys/blob/master/Car-Parrinello.ipynb).
 I also added some info on the blog: https://compphys.go.ro/car-parrinello-quantum-molecular-dynamics/
 
 ### Density Functional Theory
@@ -22,6 +25,7 @@ I also added some info on the blog: https://compphys.go.ro/car-parrinello-quantu
 The [DFT notebook](dft.ipynb)
 Covers the assignments of Thomas Arias lectures.
 You should not start it in Binder, as computations can take a long time.
+View it here if it's too big to show on GitHub: [DFT notebook](https://nbviewer.org/github/aromanro/PythonCompphys/blob/master/dft.ipynb).
 
 ### Python scripts
 
