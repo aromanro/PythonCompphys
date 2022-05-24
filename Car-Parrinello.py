@@ -72,8 +72,8 @@ def KineticTwoCenters(alpha, beta, Ra, Rb):
     len2 = difR.dot(difR)
     aplusb = alpha + beta
     ab = alpha * beta / aplusb
-    O = m.pow(m.pi/aplusb, 3./2.) * m.exp(-ab * len2) # it's actually the overlap, check the OverlapTwoCenters
-    return ab * (3. - 2. * ab * len2) * O #this can be optimized with already computed overlap, see above
+    Ovr = m.pow(m.pi/aplusb, 3./2.) * m.exp(-ab * len2) # it's actually the overlap, check the OverlapTwoCenters
+    return ab * (3. - 2. * ab * len2) * Ovr #this can be optimized with already computed overlap, see above
 
 
 # In[8]:
@@ -106,7 +106,7 @@ def TwoElectronTwoCenter(alpha, beta, gamma, delta, Ra, Rb, Rc, Rd):
     Racl2 = Rac.dot(Rac)
     Rbdl2 = Rbd.dot(Rbd)
     Rpql2 = Rpq.dot(Rpq)
-    return 2. * m.pow(m.pi, 5./2.) / (alphaplusgamma * betaplusdelta * m.sqrt(alphaplusgamma+betaplusdelta)) *            m.exp(-alpha*gamma/alphaplusgamma*Racl2 - beta*delta/betaplusdelta*Rbdl2) *           F0(alphaplusgamma*betaplusdelta / (alphaplusgamma+betaplusdelta) * Rpql2)
+    return 2. * m.pow(m.pi, 5./2.) / (alphaplusgamma * betaplusdelta * m.sqrt(alphaplusgamma+betaplusdelta)) * m.exp(-alpha*gamma/alphaplusgamma*Racl2 - beta*delta/betaplusdelta*Rbdl2) * F0(alphaplusgamma*betaplusdelta / (alphaplusgamma+betaplusdelta) * Rpql2)
 
 
 # In[10]:
@@ -138,7 +138,7 @@ for i in range(basisSize):
         
         H[i, j] = KineticTwoCenters(a, b, R0, R0) + Nuclear(a, b, R0, R0, R0) + Nuclear(a, b, R0, R0, R1)
         H[i, 4 + j] = KineticTwoCenters(a, b, R0, R1) + Nuclear(a, b, R0, R1, R0) + Nuclear(a, b, R0, R1, R1)
-        H[4 + i, j] =  H[i, 4 + j]
+        H[4 + i, j] = H[i, 4 + j]
         H[4 + i, 4 + j] = H[i, j]
 
 
@@ -156,25 +156,25 @@ for i in range(basisSize):
         for k in range(basisSize):
             c = alpha[k]
             basisSizek = basisSize + k
-            for l in range(basisSize):
-                basisSizel = basisSize + l
-                d = alpha[l]        
+            for n in range(basisSize):
+                basisSizel = basisSize + n
+                d = alpha[n]        
                 
-                Q[i, j, k, l]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R0, R0)
+                Q[i, j, k, n]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R0, R0)
                 Q[i, j, k, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R0, R1)
-                Q[i, j, basisSizek, l]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R1, R0)
+                Q[i, j, basisSizek, n]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R1, R0)
                 Q[i, j, basisSizek, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R1, R1)
-                Q[i, basisSizej, k, l]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R0, R0)
+                Q[i, basisSizej, k, n]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R0, R0)
                 Q[i, basisSizej, k, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R0, R1)
-                Q[i, basisSizej, basisSizek, l]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R1, R0)
+                Q[i, basisSizej, basisSizek, n]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R1, R0)
                 Q[i, basisSizej, basisSizek, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R1, R1)
-                Q[basisSizei, j, k, l]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R0, R0)
+                Q[basisSizei, j, k, n]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R0, R0)
                 Q[basisSizei, j, k, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R0, R1)
-                Q[basisSizei, j, basisSizek, l]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R1, R0)
+                Q[basisSizei, j, basisSizek, n]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R1, R0)
                 Q[basisSizei, j, basisSizek, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R1, R1)
-                Q[basisSizei, basisSizej, k, l]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R0, R0)
+                Q[basisSizei, basisSizej, k, n]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R0, R0)
                 Q[basisSizei, basisSizej, k, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R0, R1)
-                Q[basisSizei, basisSizej, basisSizek, l]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R1, R0)
+                Q[basisSizei, basisSizej, basisSizek, n]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R1, R0)
                 Q[basisSizei, basisSizej, basisSizek, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R1, R1)  
 
 
@@ -459,8 +459,10 @@ for nuclearCycle in range(numNuclearPoints):
         
     for i in range(basisSize):
         a = alpha[i]
+        basisSizei = basisSize + i
         for j in range(basisSize):        
             b = alpha[j]
+            basisSizej = basisSize + j
             O[i, j] = OverlapTwoCenters(a, b, R0, R0)
             O[i, 4 + j] = OverlapTwoCenters(a, b, R0, R1)
             O[4 + i, j] = O[i, 4 + j]
@@ -468,29 +470,31 @@ for nuclearCycle in range(numNuclearPoints):
         
             H[i, j] = KineticTwoCenters(a, b, R0, R0) + Nuclear(a, b, R0, R0, R0) + Nuclear(a, b, R0, R0, R1)
             H[i, 4 + j] = KineticTwoCenters(a, b, R0, R1) + Nuclear(a, b, R0, R1, R0) + Nuclear(a, b, R0, R1, R1)
-            H[4 + i, j] =  H[i, 4 + j]
+            H[4 + i, j] = H[i, 4 + j]
             H[4 + i, 4 + j] = H[i, j] 
             
             for k in range(basisSize):
                 c = alpha[k]
-                for l in range(basisSize):
-                    d = alpha[l]                                    
-                    Q[i, j, k, l]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R0, R0)
-                    Q[i, j, k, basisSize+l]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R0, R1)
-                    Q[i, j, basisSize+k, l]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R1, R0)
-                    Q[i, j, basisSize+k, basisSize+l]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R1, R1)
-                    Q[i, basisSize+j, k, l]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R0, R0)
-                    Q[i, basisSize+j, k, basisSize+l]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R0, R1)
-                    Q[i, basisSize+j, basisSize+k, l]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R1, R0)
-                    Q[i, basisSize+j, basisSize+k, basisSize+l]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R1, R1)
-                    Q[basisSize+i, j, k, l]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R0, R0)
-                    Q[basisSize+i, j, k, basisSize+l]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R0, R1)
-                    Q[basisSize+i, j, basisSize+k, l]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R1, R0)
-                    Q[basisSize+i, j, basisSize+k, basisSize+l]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R1, R1)
-                    Q[basisSize+i, basisSize+j, k, l]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R0, R0)
-                    Q[basisSize+i, basisSize+j, k, basisSize+l]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R0, R1)
-                    Q[basisSize+i, basisSize+j, basisSize+k, l]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R1, R0)
-                    Q[basisSize+i, basisSize+j, basisSize+k, basisSize+l]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R1, R1)       
+                basisSizek = basisSize + k
+                for n in range(basisSize):
+                    d = alpha[n]         
+                    basisSizel = basisSize + n
+                    Q[i, j, k, n]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R0, R0)
+                    Q[i, j, k, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R0, R1)
+                    Q[i, j, basisSizek, n]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R1, R0)
+                    Q[i, j, basisSizek, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R1, R1)
+                    Q[i, basisSizej, k, n]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R0, R0)
+                    Q[i, basisSizej, k, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R0, R1)
+                    Q[i, basisSizej, basisSizek, n]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R1, R0)
+                    Q[i, basisSizej, basisSizek, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R1, R1)
+                    Q[basisSizei, j, k, n]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R0, R0)
+                    Q[basisSizei, j, k, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R0, R1)
+                    Q[basisSizei, j, basisSizek, n]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R1, R0)
+                    Q[basisSizei, j, basisSizek, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R1, R1)
+                    Q[basisSizei, basisSizej, k, n]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R0, R0)
+                    Q[basisSizei, basisSizej, k, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R0, R1)
+                    Q[basisSizei, basisSizej, basisSizek, n]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R1, R0)
+                    Q[basisSizei, basisSizej, basisSizek, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R1, R1)       
     
     
     for p in range(2*basisSize):
@@ -504,8 +508,10 @@ for nuclearCycle in range(numNuclearPoints):
     
     for i in range(basisSize):        
         a = alpha[i]
+        basisSizei = basisSize + i
         for j in range(basisSize):        
             b = alpha[j]
+            basisSizej = basisSize + j
             ODeriv[i, 4 + j] = OverlapTwoCentersDeriv(a, b, R0, R1, X)
             ODeriv[4 + i, j] = ODeriv[i, 4 + j]
             
@@ -516,24 +522,26 @@ for nuclearCycle in range(numNuclearPoints):
     
             for k in range(basisSize):
                 c = alpha[k]
-                for l in range(basisSize):
-                    d = alpha[l]                                    
-                    QDeriv[i, j, k, l]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R0, R0, R0, X)
-                    QDeriv[i, j, k, basisSize+l]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R0, R0, R1, X)
-                    QDeriv[i, j, basisSize+k, l]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R0, R1, R0, X)
-                    QDeriv[i, j, basisSize+k, basisSize+l]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R0, R1, R1, X)
-                    QDeriv[i, basisSize+j, k, l]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R1, R0, R0, X)
-                    QDeriv[i, basisSize+j, k, basisSize+l]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R1, R0, R1, X)
-                    QDeriv[i, basisSize+j, basisSize+k, l]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R1, R1, R0, X)
-                    QDeriv[i, basisSize+j, basisSize+k, basisSize+l]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R1, R1, R1, X)
-                    QDeriv[basisSize+i, j, k, l]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R0, R0, R0, X)
-                    QDeriv[basisSize+i, j, k, basisSize+l]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R0, R0, R1, X)
-                    QDeriv[basisSize+i, j, basisSize+k, l]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R0, R1, R0, X)
-                    QDeriv[basisSize+i, j, basisSize+k, basisSize+l]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R0, R1, R1, X)
-                    QDeriv[basisSize+i, basisSize+j, k, l]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R1, R0, R0, X)
-                    QDeriv[basisSize+i, basisSize+j, k, basisSize+l]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R1, R0, R1, X)
-                    QDeriv[basisSize+i, basisSize+j, basisSize+k, l]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R1, R1, R0, X)
-                    QDeriv[basisSize+i, basisSize+j, basisSize+k, basisSize+l]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R1, R1, R1, X)       
+                basisSizek = basisSize + k
+                for n in range(basisSize):
+                    d = alpha[n]    
+                    basisSizel = basisSize + n
+                    QDeriv[i, j, k, n]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R0, R0, R0, X)
+                    QDeriv[i, j, k, basisSizel]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R0, R0, R1, X)
+                    QDeriv[i, j, basisSizek, n]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R0, R1, R0, X)
+                    QDeriv[i, j, basisSizek, basisSizel]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R0, R1, R1, X)
+                    QDeriv[i, basisSizej, k, n]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R1, R0, R0, X)
+                    QDeriv[i, basisSizej, k, basisSizel]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R1, R0, R1, X)
+                    QDeriv[i, basisSizej, basisSizek, n]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R1, R1, R0, X)
+                    QDeriv[i, basisSizej, basisSizek, basisSizel]=TwoElectronTwoCenterDeriv(a, b, c, d, R0, R1, R1, R1, X)
+                    QDeriv[basisSizei, j, k, n]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R0, R0, R0, X)
+                    QDeriv[basisSizei, j, k, basisSizel]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R0, R0, R1, X)
+                    QDeriv[basisSizei, j, basisSizek, n]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R0, R1, R0, X)
+                    QDeriv[basisSizei, j, basisSizek, basisSizel]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R0, R1, R1, X)
+                    QDeriv[basisSizei, basisSizej, k, n]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R1, R0, R0, X)
+                    QDeriv[basisSizei, basisSizej, k, basisSizel]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R1, R0, R1, X)
+                    QDeriv[basisSizei, basisSizej, basisSizek, n]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R1, R1, R0, X)
+                    QDeriv[basisSizei, basisSizej, basisSizek, basisSizel]=TwoElectronTwoCenterDeriv(a, b, c, d, R1, R1, R1, R1, X)       
      
     
     for p in range(2*basisSize):
