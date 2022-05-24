@@ -177,8 +177,8 @@ for i in range(basisSize):
         H[i, j] = Kinetic(alpha, i, j) + 2. * Coulomb(alpha, i, j) #the 2 is due of Z=2 for Helium
         O[i, j] = Overlap(alpha, i, j)
         for k in range(basisSize):
-            for l in range(basisSize):
-                Q[i, j, k, l]=TwoElectronSingleCenter(alpha, i, j, k, l)
+            for n in range(basisSize):
+                Q[i, j, k, n]=TwoElectronSingleCenter(alpha, i, j, k, n)
 
 
 # In[18]:
@@ -283,8 +283,8 @@ def KineticTwoCenters(alpha, beta, Ra, Rb):
     len2 = difR.dot(difR)
     aplusb = alpha + beta
     ab = alpha * beta / aplusb
-    O = m.pow(m.pi/aplusb, 3./2.) * m.exp(-ab * len2) # it's actually the overlap, check the OverlapTwoCenters
-    return ab * (3. - 2. * ab * len2) * O #this can be optimized with already computed overlap, see above
+    Ovr = m.pow(m.pi/aplusb, 3./2.) * m.exp(-ab * len2) # it's actually the overlap, check the OverlapTwoCenters
+    return ab * (3. - 2. * ab * len2) * Ovr #this can be optimized with already computed overlap, see above
 
 
 # In[25]:
@@ -317,7 +317,7 @@ def TwoElectronTwoCenter(alpha, beta, gamma, delta, Ra, Rb, Rc, Rd):
     Racl2 = Rac.dot(Rac)
     Rbdl2 = Rbd.dot(Rbd)
     Rpql2 = Rpq.dot(Rpq)
-    return 2. * m.pow(m.pi, 5./2.) / (alphaplusgamma * betaplusdelta * m.sqrt(alphaplusgamma+betaplusdelta)) *            m.exp(-alpha*gamma/alphaplusgamma*Racl2 - beta*delta/betaplusdelta*Rbdl2) *           F0(alphaplusgamma*betaplusdelta / (alphaplusgamma+betaplusdelta) * Rpql2)
+    return 2. * m.pow(m.pi, 5./2.) / (alphaplusgamma * betaplusdelta * m.sqrt(alphaplusgamma+betaplusdelta)) * m.exp(-alpha*gamma/alphaplusgamma*Racl2 - beta*delta/betaplusdelta*Rbdl2) * F0(alphaplusgamma*betaplusdelta / (alphaplusgamma+betaplusdelta) * Rpql2)
 
 
 # In[27]:
