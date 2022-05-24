@@ -622,11 +622,11 @@ def PoissonSolve(inp):
 
 def excVWN(n):
     X1 = 0.75*(3.0/(2.0*m.pi))**(2.0/3.0)
-    A  =  0.0310907
+    A = 0.0310907
     x0 = -0.10498
-    b  = 3.72744
-    c  = 12.9352
-    Q  = m.sqrt(4*c-b*b)
+    b = 3.72744
+    c = 12.9352
+    Q = m.sqrt(4*c-b*b)
     X0 = x0*x0+b*x0+c
 
     rs=(4*m.pi/3*n)**(-1./3.)
@@ -662,11 +662,11 @@ def getE(W):
 
 def excpVWN(n):
     X1 = 0.75*(3.0/(2.0*m.pi))**(2.0/3.0)
-    A  =  0.0310907
+    A = 0.0310907
     x0 = -0.10498
-    b  = 3.72744
-    c  = 12.9352
-    Q  = m.sqrt(4.*c-b*b)
+    b = 3.72744
+    c = 12.9352
+    Q = m.sqrt(4.*c-b*b)
     X0 = x0*x0+b*x0+c
 
     rs=(4.*m.pi/3. * n)**(-1./3.)
@@ -1370,7 +1370,7 @@ def H(W):
     for col in range(np.size(W, axis = 1)):
         out[:, col] += np.reshape(cIdag(Veff * cI(W[:,col])), np.size(out, axis = 0))        
         
-    return  out
+    return out
 
 
 # In[99]:
