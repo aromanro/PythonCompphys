@@ -93,21 +93,21 @@ basisSize = 4
 
 
 H = np.zeros((basisSize, basisSize))
-O = np.zeros((basisSize, basisSize))
+Ovr = np.zeros((basisSize, basisSize))
 for i in range(basisSize):
     H[i, i] = Kinetic(alpha, i, i) + Coulomb(alpha, i, i)
-    O[i, i] = Overlap(alpha, i, i)
+    Ovr[i, i] = Overlap(alpha, i, i)
     for j in range(i):
         H[i, j] = Kinetic(alpha, i, j) + Coulomb(alpha, i, j)
-        O[i, j] = Overlap(alpha, i, j)
+        Ovr[i, j] = Overlap(alpha, i, j)
         H[j, i] = H[i, j]
-        O[j, i] = O[i, j]
+        Ovr[j, i] = Ovr[i, j]
 
 
 # In[10]:
 
 
-eigvals, eigvecs = eigh(H, O, eigvals_only=False)
+eigvals, eigvecs = eigh(H, Ovr, eigvals_only=False)
 
 
 # In[11]:
@@ -169,13 +169,13 @@ def TwoElectronSingleCenter(alpha, p, r, q, s):
 
 
 H = np.zeros((basisSize, basisSize))
-O = np.zeros((basisSize, basisSize))
+Ovr = np.zeros((basisSize, basisSize))
 Q = np.zeros((basisSize, basisSize, basisSize, basisSize))
 
 for i in range(basisSize):
     for j in range(basisSize):
         H[i, j] = Kinetic(alpha, i, j) + 2. * Coulomb(alpha, i, j) #the 2 is due of Z=2 for Helium
-        O[i, j] = Overlap(alpha, i, j)
+        Ovr[i, j] = Overlap(alpha, i, j)
         for k in range(basisSize):
             for n in range(basisSize):
                 Q[i, j, k, n]=TwoElectronSingleCenter(alpha, i, j, k, n)
@@ -184,7 +184,7 @@ for i in range(basisSize):
 # In[18]:
 
 
-v = 1. / m.sqrt(O.sum())
+v = 1. / m.sqrt(Ovr.sum())
 
 C = np.array([v, v, v, v]) # a choice for C to start with. Check the commented one instead
 #C = np.array([1, 1, 1, 1])
@@ -209,7 +209,7 @@ for cycle in range(100):
     F = H + np.einsum('ikjl,k,l', Q, C, C)                    
                     
     # 4.20
-    eigvals, eigvecs = eigh(F, O, eigvals_only=False)
+    eigvals, eigvecs = eigh(F, Ovr, eigvals_only=False)
 
     C = eigvecs[:,0]
 
@@ -336,7 +336,7 @@ basisSize = 4 # for each atom
 
 
 H = np.zeros((basisSize * 2, basisSize * 2))
-O = np.zeros((basisSize * 2, basisSize * 2))
+Ovr = np.zeros((basisSize * 2, basisSize * 2))
 R0 = np.array([0, 0, 0])
 R1 = np.array([1, 0, 0])
 for i in range(basisSize):
@@ -345,10 +345,10 @@ for i in range(basisSize):
     for j in range(basisSize):        
         b = alpha[j]        
         basisSizej = basisSize + j
-        O[i, j] = OverlapTwoCenters(a, b, R0, R0)
-        O[basisSizei, j] = OverlapTwoCenters(a, b, R1, R0)
-        O[i, basisSizej] = OverlapTwoCenters(a, b, R0, R1)
-        O[basisSizei, basisSizej] = OverlapTwoCenters(a, b, R1, R1)
+        Ovr[i, j] = OverlapTwoCenters(a, b, R0, R0)
+        Ovr[basisSizei, j] = OverlapTwoCenters(a, b, R1, R0)
+        Ovr[i, basisSizej] = OverlapTwoCenters(a, b, R0, R1)
+        Ovr[basisSizei, basisSizej] = OverlapTwoCenters(a, b, R1, R1)
         H[i, j] = KineticTwoCenters(a, b, R0, R0) + Nuclear(a, b, R0, R0, R0) + Nuclear(a, b, R0, R0, R1)
         H[basisSizei, j] = KineticTwoCenters(a, b, R1, R0) + Nuclear(a, b, R1, R0, R0) + Nuclear(a, b, R1, R0, R1)
         H[i, basisSizej] = KineticTwoCenters(a, b, R0, R1) + Nuclear(a, b, R0, R1, R0) + Nuclear(a, b, R0, R1, R1)
@@ -358,7 +358,7 @@ for i in range(basisSize):
 # In[30]:
 
 
-eigvals, eigvecs = eigh(H, O, eigvals_only=False)
+eigvals, eigvecs = eigh(H, Ovr, eigvals_only=False)
 
 
 # In[31]:
@@ -384,31 +384,31 @@ for i in range(basisSize):
         for k in range(basisSize):
             c = alpha[k]
             basisSizek = basisSize + k
-            for l in range(basisSize):
-                basisSizel = basisSize + l
-                d = alpha[l]                
-                Q[i, j, k, l]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R0, R0)
+            for n in range(basisSize):
+                basisSizel = basisSize + n
+                d = alpha[n]                
+                Q[i, j, k, n]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R0, R0)
                 Q[i, j, k, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R0, R1)
-                Q[i, j, basisSizek, l]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R1, R0)
+                Q[i, j, basisSizek, n]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R1, R0)
                 Q[i, j, basisSizek, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R0, R0, R1, R1)
-                Q[i, basisSizej, k, l]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R0, R0)
+                Q[i, basisSizej, k, n]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R0, R0)
                 Q[i, basisSizej, k, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R0, R1)
-                Q[i, basisSizej, basisSizek, l]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R1, R0)
+                Q[i, basisSizej, basisSizek, n]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R1, R0)
                 Q[i, basisSizej, basisSizek, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R0, R1, R1, R1)
-                Q[basisSizei, j, k, l]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R0, R0)
+                Q[basisSizei, j, k, n]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R0, R0)
                 Q[basisSizei, j, k, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R0, R1)
-                Q[basisSizei, j, basisSizek, l]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R1, R0)
+                Q[basisSizei, j, basisSizek, n]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R1, R0)
                 Q[basisSizei, j, basisSizek, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R1, R0, R1, R1)
-                Q[basisSizei, basisSizej, k, l]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R0, R0)
+                Q[basisSizei, basisSizej, k, n]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R0, R0)
                 Q[basisSizei, basisSizej, k, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R0, R1)
-                Q[basisSizei, basisSizej, basisSizek, l]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R1, R0)
+                Q[basisSizei, basisSizej, basisSizek, n]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R1, R0)
                 Q[basisSizei, basisSizej, basisSizek, basisSizel]=TwoElectronTwoCenter(a, b, c, d, R1, R1, R1, R1)              
 
 
 # In[33]:
 
 
-v = 1. / m.sqrt(O.sum())
+v = 1. / m.sqrt(Ovr.sum())
 
 C = np.array([v, v, v, v, v, v, v, v])
 
@@ -430,7 +430,7 @@ for cycle in range(100):
     
     F = H + np.einsum('ikjl,k,l', Q, C, C) 
 
-    eigvals, eigvecs = eigh(F, O, eigvals_only=False)
+    eigvals, eigvecs = eigh(F, Ovr, eigvals_only=False)
 
     C = eigvecs[:,0]
 
@@ -501,7 +501,7 @@ for cycle in range(100):
     
     F = H + np.einsum('ikjl,k,l', Q, C, C) 
 
-    eigvals, eigvecs = eigh(F, O, eigvals_only=False)
+    eigvals, eigvecs = eigh(F, Ovr, eigvals_only=False)
 
     C = eigvecs[:,0]
     
