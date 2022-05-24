@@ -124,17 +124,17 @@ R1 = np.array([X, 0, 0])
 
 
 H = np.zeros((basisSize * 2, basisSize * 2))
-O = np.zeros((basisSize * 2, basisSize * 2))
+Ovr = np.zeros((basisSize * 2, basisSize * 2))
 
 for i in range(basisSize):
     a = alpha[i]
     for j in range(basisSize):
         b = alpha[j]
         
-        O[i, j] = OverlapTwoCenters(a, b, R0, R0)
-        O[i, 4 + j] = OverlapTwoCenters(a, b, R0, R1)
-        O[4 + i, j] = O[i, 4 + j]
-        O[4 + i, 4 + j] = O[i, j]   
+        Ovr[i, j] = OverlapTwoCenters(a, b, R0, R0)
+        Ovr[i, 4 + j] = OverlapTwoCenters(a, b, R0, R1)
+        Ovr[4 + i, j] = Ovr[i, 4 + j]
+        Ovr[4 + i, 4 + j] = Ovr[i, j]   
         
         H[i, j] = KineticTwoCenters(a, b, R0, R0) + Nuclear(a, b, R0, R0, R0) + Nuclear(a, b, R0, R0, R1)
         H[i, 4 + j] = KineticTwoCenters(a, b, R0, R1) + Nuclear(a, b, R0, R1, R0) + Nuclear(a, b, R0, R1, R1)
@@ -200,7 +200,7 @@ for p in range(2*basisSize):
 # In[14]:
 
 
-v = 1. / m.sqrt(O.sum())
+v = 1. / m.sqrt(Ovr.sum())
 
 C = np.array([v, v, v, v, v, v, v, v])
 Cprev = C.copy()
@@ -254,9 +254,9 @@ for cycle in range(numPoints):
                 
     # determine lambda - see 9.32 - but be careful, it's wrong! Get it from 9.28 by replacing C[r] = Ct[r] - lambda * h^2 * sum(S[r, s]*C[s]), h^4 and h^2 are missing (here h is dt)
      
-    OC = O.dot(C)
-    OCt = O.dot(Ct)
-    OOC = O.dot(OC)
+    OC = Ovr.dot(C)
+    OCt = Ovr.dot(Ct)
+    OOC = Ovr.dot(OC)
     
     a = OOC.dot(OC) * dt4
     b = -2. * OC.dot(OCt) * dt2
@@ -420,14 +420,14 @@ for i in range(basisSize):
     a = alpha[i]
     for j in range(basisSize):        
         b = alpha[j]
-        O[i, j] = OverlapTwoCenters(a, b, R0, R0)
-        O[i, 4 + j] = OverlapTwoCenters(a, b, R0, R1)
-        O[4 + i, j] = O[i, 4 + j]
-        O[4 + i, 4 + j] = O[i, j]  
+        Ovr[i, j] = OverlapTwoCenters(a, b, R0, R0)
+        Ovr[i, 4 + j] = OverlapTwoCenters(a, b, R0, R1)
+        Ovr[4 + i, j] = Ovr[i, 4 + j]
+        Ovr[4 + i, 4 + j] = Ovr[i, j]  
             
 # reinitialize Cs
 
-v = 1. / m.sqrt(O.sum())
+v = 1. / m.sqrt(Ovr.sum())
 
 C = np.array([v, v, v, v, v, v, v, v])
 Cprev = C.copy()    
@@ -463,10 +463,10 @@ for nuclearCycle in range(numNuclearPoints):
         for j in range(basisSize):        
             b = alpha[j]
             basisSizej = basisSize + j
-            O[i, j] = OverlapTwoCenters(a, b, R0, R0)
-            O[i, 4 + j] = OverlapTwoCenters(a, b, R0, R1)
-            O[4 + i, j] = O[i, 4 + j]
-            O[4 + i, 4 + j] = O[i, j]  
+            Ovr[i, j] = OverlapTwoCenters(a, b, R0, R0)
+            Ovr[i, 4 + j] = OverlapTwoCenters(a, b, R0, R1)
+            Ovr[4 + i, j] = Ovr[i, 4 + j]
+            Ovr[4 + i, 4 + j] = Ovr[i, j]  
         
             H[i, j] = KineticTwoCenters(a, b, R0, R0) + Nuclear(a, b, R0, R0, R0) + Nuclear(a, b, R0, R0, R1)
             H[i, 4 + j] = KineticTwoCenters(a, b, R0, R1) + Nuclear(a, b, R0, R1, R0) + Nuclear(a, b, R0, R1, R1)
@@ -573,9 +573,9 @@ for nuclearCycle in range(numNuclearPoints):
                 
         # determine lambda - see 9.32 - but be careful, it's wrong! Get it from 9.28 by replacing C[r] = Ct[r] - lambda * h^2 * sum(S[r, s]*C[s]), h^4 and h^2 are missing (here h is dt)
      
-        OC = O.dot(C)
-        OCt = O.dot(Ct)
-        OOC = O.dot(OC)
+        OC = Ovr.dot(C)
+        OCt = Ovr.dot(Ct)
+        OOC = Ovr.dot(OC)
     
         a = OOC.dot(OC) * dt4
         b = -2. * OC.dot(OCt) * dt2
