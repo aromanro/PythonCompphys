@@ -1,6 +1,7 @@
 # Python Compphys
 Various simple Computational Physics topics handled in Python
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/81bc7171d25a47398bb344d0925bade3)](https://app.codacy.com/gh/aromanro/PythonCompphys?utm_source=github.com&utm_medium=referral&utm_content=aromanro/PythonCompphys&utm_campaign=Badge_Grade_Settings)
 [![CodeFactor](https://www.codefactor.io/repository/github/aromanro/pythoncompphys/badge)](https://www.codefactor.io/repository/github/aromanro/pythoncompphys)
 
 Some tutorials on various topics, using python instead of C++, with more comments and on easier things that those from the C++ projects, with very little focus on performance. 
