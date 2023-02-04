@@ -22,6 +22,7 @@
 
 # In[1]:
 
+
 import math as m
 import numpy as np
 import scipy as sp
@@ -778,9 +779,7 @@ Vdual=cJdag(O(cJ(V)))
 # In[70]:
 
 
-def sd(Win, Nit, fillE = True):
-    alfa = 0.00003
-    
+def sd(Win, Nit, fillE = True, alfa = 0.00003):
     W = Win
     
     if fillE:
@@ -827,9 +826,7 @@ def Dot(a, b):
 # In[74]:
 
 
-def lm(Win, Nit, fillE = True):
-    alphat = 0.00003
-    
+def lm(Win, Nit, fillE = True, alphat = 0.00003):
     W = Win
     
     if fillE:
@@ -881,9 +878,7 @@ def K(inp):
 # In[77]:
 
 
-def pclm(Win, Nit, fillE = True):
-    alphat = 0.00003
-    
+def pclm(Win, Nit, fillE = True, alphat = 0.00003):
     W = Win
     if fillE:
         Elist = np.zeros(Nit)
@@ -1008,9 +1003,259 @@ plt.legend(['lm','pclm', 'pccg-FR', 'pccg-PR', 'pccg-HS'])
 plt.show()
 
 
-# #### The 'quantum dot':
+# #### The following gradient-descent derived methods are not in the lecture or assignments, 
+# #### but they are important and can be useful not only in physics but also in other domains (like machine learning), so I added them here.
+# #### They can be safely skipped!
+# ##### They might be better suited in stochastic context (for example using batches), but there is no reason why they couldn't be tried here, too.
+# ##### I intend to use them in a machine learning project and wanted to see them in action before implementing them in C++ in that project.
+# ##### Here they don't perform as well as the methods above, but they seem to work.
+# ##### They would benefit from some parameters tuning but since they are not intended for this, I will do that in the stochastic gradient descent context.
 
 # In[84]:
+
+
+def momentum(Win, Nit, fillE = True, alfa = 0.001, beta = 0.5):
+    
+    W = Win
+    m = np.zeros(W.shape)
+    
+    if fillE:
+        Elist = np.zeros(Nit)
+    else:
+        Elist = None
+    
+    for i in range(Nit):
+        m = beta * m - alfa * getgrad(W)
+        W = W + m
+        if fillE:
+            E = getE(W)
+            Elist[i] = E
+            print("Niter:", i, "E:", E)
+    
+    return W, Elist
+
+
+# In[85]:
+
+
+Wm, Em = momentum(W,120)
+
+
+# In[86]:
+
+
+def NesterovAccelerated(Win, Nit, fillE = True, alfa = 0.001, beta = 0.5):
+    W = Win
+    
+    m = np.zeros(W.shape)
+    
+    if fillE:
+        Elist = np.zeros(Nit)
+    else:
+        Elist = None
+    
+    for i in range(Nit):
+        m = beta * m - alfa * getgrad(W + beta * m)
+        W = W + m
+        if fillE:
+            E = getE(W)
+            Elist[i] = E
+            print("Niter:", i, "E:", E)
+    
+    return W, Elist
+
+
+# In[87]:
+
+
+Wn, En = NesterovAccelerated(W,120)
+
+
+# In[88]:
+
+
+def AdaGrad(Win, Nit, fillE = True, alfa = 0.001):
+    W = Win
+    
+    s = np.zeros(W.shape)
+    
+    if fillE:
+        Elist = np.zeros(Nit)
+    else:
+        Elist = None
+    
+    for i in range(Nit):
+        g = getgrad(W)
+        s = s + g * g
+        W = W - alfa * g / np.sqrt(s + 0.0000001) 
+        if fillE:
+            E = getE(W)
+            Elist[i] = E
+            print("Niter:", i, "E:", E)
+    
+    return W, Elist
+
+
+# In[89]:
+
+
+Wa, Ea = AdaGrad(W,120)
+
+
+# In[90]:
+
+
+def RMSProp(Win, Nit, fillE = True, alfa = 0.001, beta = 0.5):
+    W = Win
+    
+    s = np.zeros(W.shape)
+    
+    if fillE:
+        Elist = np.zeros(Nit)
+    else:
+        Elist = None
+    
+    for i in range(Nit):
+        g = getgrad(W)
+        s = beta * s + (1. - beta) * g * g
+        W = W - alfa * g / np.sqrt(s + 0.0000001) 
+        if fillE:
+            E = getE(W)
+            Elist[i] = E
+            print("Niter:", i, "E:", E)
+    
+    return W, Elist
+
+
+# In[91]:
+
+
+Wr, Er = RMSProp(W,120)
+
+
+# In[92]:
+
+
+def RMSPropNesterov(Win, Nit, fillE = True, alfa = 0.001, beta1 = 0.5, beta2 = 0.5):
+    W = Win
+    
+    s = np.zeros(W.shape)
+    m = np.zeros(W.shape)
+    
+    if fillE:
+        Elist = np.zeros(Nit)
+    else:
+        Elist = None
+    
+    for i in range(Nit):
+        g = getgrad(W + alfa * m)
+        s = beta2 * s + (1. - beta2) * g * g
+        m = beta1 * m - alfa * g / np.sqrt(s + 0.0000001) 
+        W = W + m 
+        if fillE:
+            E = getE(W)
+            Elist[i] = E
+            print("Niter:", i, "E:", E)
+    
+    return W, Elist
+
+
+# In[93]:
+
+
+Wrn, Ern = RMSPropNesterov(W,120)
+
+
+# In[94]:
+
+
+def Adam(Win, Nit, fillE = True, alfa = 0.001, beta1 = 0.5, beta2 = 0.5):
+    W = Win
+    
+    s = np.zeros(W.shape)
+    m = np.zeros(W.shape)
+    
+    if fillE:
+        Elist = np.zeros(Nit)
+    else:
+        Elist = None
+    
+    for i in range(Nit):
+        g = getgrad(W)
+        m = beta1 * m - (1. - beta1) * g
+        s = beta2 * s + (1. - beta2) * g * g
+        m = m / (1. - beta1 * beta1)
+        s = s / (1. - beta2 * beta2)
+        W = W - alfa * g / np.sqrt(s + 0.0000001) 
+        if fillE:
+            E = getE(W)
+            Elist[i] = E
+            print("Niter:", i, "E:", E)
+    
+    return W, Elist
+
+
+# In[95]:
+
+
+Wadam, Eadam = Adam(W, 120)
+
+
+# In[96]:
+
+
+def Nadam(Win, Nit, fillE = True, alfa = 0.001, beta1 = 0.5, beta2 = 0.5):
+    W = Win
+    
+    s = np.zeros(W.shape)
+    m = np.zeros(W.shape)
+    
+    if fillE:
+        Elist = np.zeros(Nit)
+    else:
+        Elist = None
+    
+    for i in range(Nit):
+        step = beta1 * m
+        g = getgrad(W + step)
+        m = step - (1. - beta1) * g
+        s = beta2 * s + (1. - beta2) * g * g
+        m = m / (1. - beta1 * beta1)
+        s = s / (1. - beta2 * beta2)
+        W = W - alfa * g / np.sqrt(s + 0.0000001) 
+        if fillE:
+            E = getE(W)
+            Elist[i] = E
+            print("Niter:", i, "E:", E)
+    
+    return W, Elist
+
+
+# In[97]:
+
+
+Wnadam,Enadam = Nadam(W, 120)
+
+
+# In[98]:
+
+
+plt.semilogy(range(Em.size), Em-43.33711477820)
+plt.semilogy(range(En.size), En-43.33711477820)
+plt.semilogy(range(Ea.size), Ea-43.33711477820)
+plt.semilogy(range(Er.size), Er-43.33711477820)
+plt.semilogy(range(Ern.size), Ern-43.33711477820)
+plt.semilogy(range(Eadam.size), Eadam-43.33711477820)
+plt.semilogy(range(Enadam.size), Enadam-43.33711477820)
+
+plt.legend(['Momentum','Nesterov','AdaGrad','RMSProp','RMSPropNesterov','Adam','Nadam'])
+
+plt.show()
+
+
+# #### The 'quantum dot':
+
+# In[99]:
 
 
 W=Wcg1
@@ -1030,7 +1275,7 @@ for i in range(Ns):
 # 
 # Let's try for Hydrogen first:
 
-# In[85]:
+# In[100]:
 
 
 R=np.diag([16, 16, 16])
@@ -1074,7 +1319,7 @@ print('Unum:', Unum[0,0])
 print('Uself:', Uself)
 
 
-# In[86]:
+# In[101]:
 
 
 old_settings = np.seterr(divide='ignore', invalid='ignore')
@@ -1107,7 +1352,7 @@ print('\nTotal energy:', getE(W) + Ewald, "NIST value: -0.445671")
 
 # Now the Hydrogen molecule:
 
-# In[87]:
+# In[102]:
 
 
 f = 2
@@ -1133,7 +1378,7 @@ print('Unum:', Unum[0,0])
 print('Uself:', Uself)
 
 
-# In[88]:
+# In[103]:
 
 
 old_settings = np.seterr(divide='ignore', invalid='ignore')
@@ -1168,7 +1413,7 @@ print('\nTotal energy:', getE(W) + Ewald, "Expected: -1.136")
 
 # #### Minimal, isotropic spectral representation 
 
-# In[89]:
+# In[104]:
 
 
 R=np.diag([16, 16, 16])
@@ -1212,7 +1457,7 @@ print('Unum:', Unum[0,0])
 print('Uself:', Uself)
 
 
-# In[90]:
+# In[105]:
 
 
 eS = np.reshape(S / 2. + 0.5, (S.size, 1))
@@ -1223,7 +1468,7 @@ G2c = np.reshape(G2[active], (active[0].size, 1))
 print("Compression:", G2.size / G2c.size, "Theoretical:", 1./(4.*m.pi*(1./4.)**3./3.))
 
 
-# In[91]:
+# In[106]:
 
 
 def L(inp):
@@ -1238,7 +1483,7 @@ def L(inp):
     return -splalg.det(R) * (G2 @ np.ones((1, np.size(out, 1)))) * out
 
 
-# In[92]:
+# In[107]:
 
 
 def K(inp):
@@ -1248,7 +1493,7 @@ def K(inp):
     return inp / (1. + G2)
 
 
-# In[93]:
+# In[108]:
 
 
 def cI(inp):
@@ -1272,7 +1517,7 @@ def cI(inp):
     return out
 
 
-# In[94]:
+# In[109]:
 
 
 def cIdag(inp):
@@ -1292,7 +1537,7 @@ def cIdag(inp):
     return out
 
 
-# In[95]:
+# In[110]:
 
 
 old_settings = np.seterr(divide='ignore', invalid='ignore')
@@ -1325,7 +1570,7 @@ print('\nTotal energy:', getE(W) + Ewald, "NIST value: -0.445671")
 
 # #### Full benefit from minimal representation:
 
-# In[96]:
+# In[111]:
 
 
 def getn(Psi, f):
@@ -1338,7 +1583,7 @@ def getn(Psi, f):
     return n
 
 
-# In[97]:
+# In[112]:
 
 
 def getE(W):
@@ -1352,7 +1597,7 @@ def getE(W):
     return np.real(E[0, 0])
 
 
-# In[98]:
+# In[113]:
 
 
 def H(W):    
@@ -1372,7 +1617,7 @@ def H(W):
     return out
 
 
-# In[99]:
+# In[114]:
 
 
 np.random.seed(100)
@@ -1395,7 +1640,7 @@ print('\nTotal energy:', getE(W) + Ewald, "NIST value: -0.445671")
 
 # #### Calculation of solid Ge
 
-# In[100]:
+# In[115]:
 
 
 a=5.66/0.52917721
@@ -1441,7 +1686,7 @@ print('Unum:', Unum[0,0])
 print('Uself:', Uself)
 
 
-# In[101]:
+# In[116]:
 
 
 eS = np.reshape(S / 2. + 0.5, (S.size, 1))
@@ -1452,7 +1697,7 @@ G2c = np.reshape(G2[active], (active[0].size, 1))
 print("Compression:", G2.size / G2c.size, "Theoretical:", 1./(4.*m.pi*(1./4.)**3./3.))
 
 
-# In[102]:
+# In[117]:
 
 
 def PseudoGe(pos):
@@ -1467,7 +1712,7 @@ def PseudoGe(pos):
     return P
 
 
-# In[103]:
+# In[118]:
 
 
 #sz = np.size(r,axis = 0)
@@ -1504,7 +1749,7 @@ Vps = np.reshape(Vps, (Vps.size,1))
 Vdual = cJ(Vps * Sf)
 
 
-# In[104]:
+# In[119]:
 
 
 dat = np.reshape(np.real(Vdual), S)
@@ -1524,7 +1769,7 @@ plt.tight_layout()
 plt.show()
 
 
-# In[105]:
+# In[120]:
 
 
 Ns = 16 # 8 atoms, Z = 4, 2 electrons / state
@@ -1540,7 +1785,7 @@ W = orthogonalize(W)
 W, Elist = pccg(W, 100, 1, False)
 
 
-# In[106]:
+# In[121]:
 
 
 Psi, epsilon = getPsi(W)
@@ -1558,7 +1803,7 @@ CEeV = CE * 27.21138
 print('Cohesive Energy:', CE, 'Hartree, eV:', CEeV, 'Experiment: 3.85', 'error:', abs(CEeV - 3.85) / 3.85 * 100.,'%')
 
 
-# In[107]:
+# In[122]:
 
 
 W = orthogonalize(W)
@@ -1571,7 +1816,7 @@ plt.pcolormesh(img)
 plt.show()
 
 
-# In[108]:
+# In[123]:
 
 
 img = n[np.nonzero(M[:,1] == M[:,2])]
@@ -1587,7 +1832,7 @@ plt.show()
 
 # #### Variable fillings and verification of the pseudopotential
 
-# In[109]:
+# In[124]:
 
 
 def getn(Psi, f):
@@ -1601,7 +1846,7 @@ def getn(Psi, f):
     return n
 
 
-# In[110]:
+# In[125]:
 
 
 def getE(W):
@@ -1615,7 +1860,7 @@ def getE(W):
     return np.real(E[0, 0])
 
 
-# In[111]:
+# In[126]:
 
 
 def Q(inp, U):
@@ -1630,7 +1875,7 @@ def Q(inp, U):
     return V @ ((Vadj @ inp @ V) / denom) @ Vadj
 
 
-# In[112]:
+# In[127]:
 
 
 def getgrad(W):
@@ -1655,7 +1900,7 @@ def getgrad(W):
 
 # #### Test the results against the previous results of Ge crystal
 
-# In[113]:
+# In[128]:
 
 
 f = np.asarray(2 * np.ones((Ns, 1)))
@@ -1671,7 +1916,7 @@ W = orthogonalize(W)
 W, Elist = pccg(W,100,1, False)
 
 
-# In[114]:
+# In[129]:
 
 
 Psi, epsilon = getPsi(W)
@@ -1691,7 +1936,7 @@ print('Cohesive Energy:', CE, 'Hartree, eV:', CEeV, 'Experiment: 3.85', 'error:'
 
 # #### Isolated Ge atom
 
-# In[115]:
+# In[130]:
 
 
 Ns = 4
@@ -1719,13 +1964,13 @@ print('Unum:', Unum[0,0])
 print('Uself:', Uself)
 
 
-# In[116]:
+# In[131]:
 
 
 Vdual = cJ(Vps * Sf)
 
 
-# In[117]:
+# In[132]:
 
 
 np.random.seed(100)
@@ -1745,7 +1990,7 @@ W, Elist = pclm(W, 10, True)
 #W, Elist = pccg(W, 10, 1, True)
 
 
-# In[118]:
+# In[133]:
 
 
 Psi, epsilon = getPsi(W)
