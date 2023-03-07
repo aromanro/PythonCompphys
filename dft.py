@@ -1184,9 +1184,10 @@ def Adam(Win, Nit, fillE = True, alfa = 0.001, beta1 = 0.5, beta2 = 0.5):
         g = getgrad(W)
         m = beta1 * m - (1. - beta1) * g
         s = beta2 * s + (1. - beta2) * g * g
-        m = m / (1. - beta1 * beta1)
-        s = s / (1. - beta2 * beta2)
-        W = W - alfa * g / np.sqrt(s + 0.0000001) 
+        p = i + 1
+        m = m / (1. - np.power(beta1, p))
+        s = s / (1. - np.power(beta2, p))
+        W = W + alfa * m / np.sqrt(s + 0.0000001) 
         if fillE:
             E = getE(W)
             Elist[i] = E
@@ -1216,13 +1217,13 @@ def Nadam(Win, Nit, fillE = True, alfa = 0.001, beta1 = 0.5, beta2 = 0.5):
         Elist = None
     
     for i in range(Nit):
-        step = beta1 * m
-        g = getgrad(W + step)
-        m = step - (1. - beta1) * g
+        g = getgrad(W + alfa * m)
+        m = beta1 * m - (1. - beta1) * g
         s = beta2 * s + (1. - beta2) * g * g
-        m = m / (1. - beta1 * beta1)
-        s = s / (1. - beta2 * beta2)
-        W = W - alfa * g / np.sqrt(s + 0.0000001) 
+        p = i + 1
+        m = m / (1. - np.power(beta1, p))
+        s = s / (1. - np.power(beta2, p))
+        W = W + alfa * m / np.sqrt(s + 0.0000001) 
         if fillE:
             E = getE(W)
             Elist[i] = E
